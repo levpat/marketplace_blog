@@ -1,6 +1,5 @@
-import uuid
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select, insert
+from sqlalchemy import insert
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
