@@ -5,8 +5,12 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 
+from datetime import datetime, timedelta, timezone
+import jwt
+
 from src.backend.db_depends import get_db
 from src.users.models import Users
+from src.config import secret, alg
 
 auth_router = APIRouter(prefix='/auth', tags=['auth'])
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -26,12 +30,29 @@ async def authenticate_user(db: Annotated[AsyncSession, Depends(get_db)],
     return user
 
 
+async def create_async_token(username: str, user_id: str, is_admin: bool,
+                             expires_delta: timedelta):
+    payload = {
+        "sub": username,
+        "id": user_id,
+        "is_admin": is_admin,
+        "exp": datetime.now(timezone.utc) + expires_delta
+    }
+
+    payload["exp"] = int(payload["exp"].timestamp())
+    wt = jwt.encode(payload, secret, algorithm=alg)
+
+    return wt
+
+
 @auth_router.post("/token")
 async def login(db: Annotated[AsyncSession, Depends(get_db)],
                 form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> dict:
     user = await authenticate_user(db, form_data.username, form_data.password)
+    token = await create_async_token(user.username, str(user.id), user.is_admin,
+                                     expires_delta=timedelta(minutes=20))
     return {
-        "access_token": user.username,
+        "access_token": token,
         "token_type": "bearer"
     }
 
