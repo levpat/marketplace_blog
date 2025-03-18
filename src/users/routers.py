@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 from src.backend.db_depends import get_db
 from src.users.models import Users
 from src.users.schemas import CreateUser
+from src.auth.backend import send_email
 
 user_router = APIRouter(prefix='/users', tags=['users'])
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -22,6 +23,8 @@ async def create_user(db: Annotated[AsyncSession, Depends(get_db)],
                                           hashed_password=bcrypt_context.hash(create_user.password)
                                           ))
     await db.commit()
+
+    await send_email(create_user.email)
 
     return {
         'status_code': status.HTTP_201_CREATED,
