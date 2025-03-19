@@ -1,9 +1,10 @@
-from src.config import mail_pass, smtp
-
-from fastapi import BackgroundTasks, status
+import asyncio
+from celery import shared_task
+from fastapi import status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
 
+from src.config import mail_pass, smtp
 
 conf = ConnectionConfig(
     MAIL_USERNAME='lion.patskevich@yandex.ru',
@@ -16,7 +17,7 @@ conf = ConnectionConfig(
 )
 
 
-async def send_email(email: EmailStr | str) -> dict:
+async def _send_email(email: EmailStr | str) -> dict:
     message = MessageSchema(
         recipients=[email],
         subject="Test sending email",
@@ -30,4 +31,12 @@ async def send_email(email: EmailStr | str) -> dict:
     return {
         'status_code': status.HTTP_201_CREATED,
         'transactions': 'Success'
+    }
+
+
+@shared_task()
+def send_email(email: EmailStr | str) -> dict:
+    asyncio.run(_send_email(email))
+    return {
+        "task": "email sending"
     }
