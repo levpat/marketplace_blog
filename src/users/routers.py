@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
+from pydantic import EmailStr
 from sqlalchemy import insert
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +16,8 @@ bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 @user_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: Annotated[AsyncSession, Depends(get_db)],
-                      create_user: CreateUser) -> dict:
+                      create_user: CreateUser,
+                      background_tasks: BackgroundTasks, email: EmailStr) -> dict:
     await db.execute(insert(Users).values(first_name=create_user.first_name,
                                           last_name=create_user.last_name,
                                           username=create_user.username,
@@ -24,7 +26,7 @@ async def create_user(db: Annotated[AsyncSession, Depends(get_db)],
                                           ))
     await db.commit()
 
-    await send_email(create_user.email)
+    background_tasks.add_task(send_email, create_user.email)
 
     return {
         'status_code': status.HTTP_201_CREATED,
