@@ -23,7 +23,7 @@ celery = Celery(
 
 @user_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: Annotated[AsyncSession, Depends(get_db)],
-                      create_user: CreateUser,
+                      create_user: CreateUser
 
                       ) -> dict:
     try:

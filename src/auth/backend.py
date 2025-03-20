@@ -4,16 +4,16 @@ from fastapi import status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
 
-from src.config import mail_pass, smtp
+from src.config import mail_pass, smtp, mail_address, mail_pass_for_google, smtp_google, mail_address_2
 
 conf = ConnectionConfig(
-    MAIL_USERNAME='lion.patskevich@yandex.ru',
-    MAIL_PASSWORD=mail_pass,
-    MAIL_PORT=465,
-    MAIL_SERVER=smtp,
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
-    MAIL_FROM="lion.patskevich@yandex.ru",
+    MAIL_USERNAME=mail_address_2,
+    MAIL_PASSWORD=mail_pass_for_google,
+    MAIL_PORT=587,
+    MAIL_SERVER=smtp_google,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    MAIL_FROM=mail_address_2,
 )
 
 
