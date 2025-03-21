@@ -1,115 +1,44 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import select
+from fastapi import Depends, APIRouter, status
+from fastapi.responses import Response
+from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from passlib.context import CryptContext
 
-from datetime import datetime, timedelta, timezone
-import jwt
-
+from src.auth.backend import create_access_token, authenticate_user, get_current_user, set_token
 from src.backend.db_depends import get_db
-from src.users.models import Users
-from src.config import secret, alg
 
 auth_router = APIRouter(prefix='/auth', tags=['auth'])
-bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-async def authenticate_user(db: Annotated[AsyncSession, Depends(get_db)],
-                            username: str, password: str):
-    user = await db.scalar(select(Users).where(Users.username == username))
-    if not user or not bcrypt_context.verify(password, user.hashed_password) or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid authentication credentials',
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    return user
-
-
-async def create_access_token(username: str, user_id: str, is_admin: bool,
-                              expires_delta: timedelta):
-    payload = {
-        "sub": username,
-        "id": user_id,
-        "is_admin": is_admin,
-        "exp": datetime.now(timezone.utc) + expires_delta
-    }
-
-    payload["exp"] = int(payload["exp"].timestamp())
-    wt = jwt.encode(payload, secret, algorithm=alg)
-
-    return wt
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    try:
-        payload = jwt.decode(token, secret, algorithms=[alg])
-        username: str | None = payload.get("sub")
-        user_id: str | None = payload.get("id")
-        is_admin: bool | None = payload.get("is_admin")
-        expire: int | None = payload.get("exp")
-
-        if username is None or user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate user"
-            )
-
-        if expire is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No access token denied"
-            )
-
-        if not isinstance(expire, int):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token format"
-            )
-
-        current_time = datetime.now(timezone.utc).timestamp()
-
-        if expire < current_time:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expired!"
-            )
-
-        data = {
-            "username": username,
-            "id": user_id,
-            "is_admin": is_admin,
-        }
-        return data
-
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired!"
-        )
-    except jwt.exceptions:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Could not validate user'
-        )
-
-
-@auth_router.post("/token")
-async def login(db: Annotated[AsyncSession, Depends(get_db)],
+@auth_router.post("/login")
+async def login(response: Response, db: Annotated[AsyncSession, Depends(get_db)],
                 form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> dict:
     user = await authenticate_user(db, form_data.username, form_data.password)
-    token = await create_access_token(user.username, str(user.id), user.is_admin,
-                                      expires_delta=timedelta(minutes=20))
+    data = {
+        "sub": str(user.id),
+        "permission": user.is_admin
+    }
+    token = create_access_token(data)
+    set_token(response, token)
     return {
-        "access_token": token,
-        "token_type": "bearer"
+        "status": status.HTTP_201_CREATED,
+        "detail": f"Wellcome {user.first_name}!"
     }
 
 
 @auth_router.get('/read_current_user')
 async def read_current_user(user: dict = Depends(get_current_user)):
     return {"User": user}
+
+
+@auth_router.get('/get_admin_user')
+async def get_admin(user: Annotated[dict, Depends(get_current_user)]):
+    if user.get("permission"):
+        return {
+            "status": status.HTTP_202_ACCEPTED,
+            "detail": "Wellcome Admin!"
+        }
+    return {
+        "status": status.HTTP_401_UNAUTHORIZED,
+        "detail": "Need authorization"
+    }

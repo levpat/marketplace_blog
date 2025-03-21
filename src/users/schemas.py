@@ -11,3 +11,8 @@ class CreateUser(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+
+class CurrentUser(BaseModel):
+    id: str
+    is_admin: bool | None
