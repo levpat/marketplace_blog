@@ -12,6 +12,8 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
+from starlette.types import ASGIApp, Receive, Scope, Send
+
 
 from src.backend.db_depends import get_db
 
@@ -74,6 +76,12 @@ async def authenticate_user(db: Annotated[AsyncSession, Depends(get_db)],
 
 async def get_current_user(request: Request):
     token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Need authorization"
+        )
 
     try:
         payload = jwt.decode(token, secret, algorithms=[alg])
@@ -138,7 +146,3 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 def set_token(response: Response, token: str) -> None:
     response.set_cookie(key="access_token", value=token, httponly=True)
 
-# def get_token(request: Request):
-#    token = request.get("access_token")
-#    try:
-#        to_decode = jwt.decode(token, secret, algorithms=[alg])

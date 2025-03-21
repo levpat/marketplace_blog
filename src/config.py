@@ -19,4 +19,3 @@ mail_address_2 = os.getenv("MAIL_ADDRESS_FOR_GOOGLE")
 mail_pass_for_google = os.getenv("MAIL_PASS_FOR_GOOGLE")
 smtp_google = os.getenv("SMTP_2")
 
-#excluded_routes = ["/auth", "/docs"]
