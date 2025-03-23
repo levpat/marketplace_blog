@@ -15,7 +15,6 @@ from starlette import status
 from starlette.requests import Request
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-
 from src.backend.db_depends import get_db
 
 from src.config import (
@@ -155,7 +154,7 @@ class JWTMiddleware:
             "/docs",
             "/openapi.json",
             "/auth/login",
-            "/auth/register"
+            "/users/",
         }
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
