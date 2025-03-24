@@ -1,23 +1,21 @@
+import uuid
+from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 
 class Post(BaseModel):
-    id: str
+    id: uuid.UUID = uuid.uuid4()
     title: str
     text: str
-    category: str
-    image: str
+    category: Optional[str] = None
+    image_url: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
-class CreatePost(BaseModel):
+class CreatePost(Post):
     title: str
     text: str
-    category: str | None
-    image: str | None
-
-
-class PostPaginator(BaseModel):
-    items: list[Post]
-    total: int
-    offset: int
-    limit: int
+    category: Optional[str] = None
+    image_url: Optional[str] = None
