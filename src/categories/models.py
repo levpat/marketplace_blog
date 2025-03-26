@@ -1,6 +1,4 @@
-import uuid
-
-from sqlalchemy import Column, UUID, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import relationship
 
 from src.backend.db import Base
@@ -9,8 +7,7 @@ from src.backend.db import Base
 class Category(Base):
     __tablename__ = 'categories'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, unique=True, index=True, nullable=False)
     title = Column(String, unique=True, nullable=False)
-    slug = Column(String, unique=True, index=True, nullable=False)
 
-    posts = relationship('Post', back_populates='categories')
+    posts = relationship('Post', back_populates='category')

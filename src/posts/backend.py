@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.db_depends import get_db
 from src.posts.models import Post
+from src.categories.models import Category
 
 
 class PostManager:
@@ -14,11 +15,17 @@ class PostManager:
     @staticmethod
     async def create(db, create_post):
         try:
+            category = await db.scalar(select(Category).where(Category.id == create_post.category_id))
+            if category is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='There is no category found')
+
             await db.execute(insert(Post).values(
                 title=create_post.title,
                 text=create_post.text,
-                category=create_post.category,
-                image_url=create_post.image
+                category_id=create_post.category_id,
+                image_url=create_post.image_url
             ))
 
             await db.commit()
@@ -37,9 +44,13 @@ class PostManager:
         }
 
     @staticmethod
-    async def get(db: Annotated[AsyncSession, Depends(get_db)], limit: int, offset: int):
+    async def get(db: Annotated[AsyncSession, Depends(get_db)], limit: int, offset: int, category: int | None = None):
         try:
-            result = await db.scalars(select(Post).order_by(Post.id).limit(limit).offset(offset))
+            if category is None:
+                result = await db.scalars(select(Post).order_by(Post.id).limit(limit).offset(offset))
+                return result.all()
+            result = await db.scalars(
+                select(Post).where(Post.category_id == category).order_by(Post.id).limit(limit).offset(offset))
             return result.all()
 
         except Exception as error:
