@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import HTTPException, status, Depends
 
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.db_depends import get_db
@@ -30,6 +30,7 @@ class PostManager:
 
             await db.commit()
 
+
         except Exception as error:
             await db.rollback()
             raise HTTPException(
@@ -44,14 +45,34 @@ class PostManager:
         }
 
     @staticmethod
-    async def get(db: Annotated[AsyncSession, Depends(get_db)], limit: int, offset: int, category: int | None = None):
+    async def get(
+            db: Annotated[AsyncSession, Depends(get_db)],
+            limit: int,
+            offset: int,
+            category: int | None = None,
+            search: str | None = None
+    ):
         try:
-            if category is None:
-                result = await db.scalars(select(Post).order_by(Post.id).limit(limit).offset(offset))
-                return result.all()
-            result = await db.scalars(
-                select(Post).where(Post.category_id == category).order_by(Post.id).limit(limit).offset(offset))
-            return result.all()
+            query = select(Post)
+
+            if category is not None:
+                query = query.where(Post.category_id == category)
+
+            if search:
+                search_query = func.plainto_tsquery('english', search)
+            query = query.where(
+                Post.search_vector.op('@@')(search_query).order_by(
+                    func.ts_rank(Post.search_vector, search_query).desc(),
+                    Post.id
+                )
+            )
+            query = query.limit(limit).offset(offset)
+
+            result = await db.execute(query)
+            posts = result.scalars().all()
+
+            return posts
+
 
         except Exception as error:
             await db.rollback()

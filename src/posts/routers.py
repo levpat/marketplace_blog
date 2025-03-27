@@ -14,8 +14,9 @@ post_router = APIRouter(prefix='/posts', tags=['posts'])
 async def get(db: Annotated[AsyncSession, Depends(get_db)],
               limit: int = Query(10, ge=1, le=100),
               offset: int = Query(0, ge=0),
-              category: int | None = Query(default=None)):
-    return await pm.get(db=db, limit=limit, offset=offset, category=category)
+              category: int | None = Query(default=None),
+              search: str | None = Query(default=None)):
+    return await pm.get(db=db, limit=limit, offset=offset, category=category, search=search)
 
 
 @post_router.post("/create")
