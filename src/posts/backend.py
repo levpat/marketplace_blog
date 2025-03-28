@@ -19,7 +19,8 @@ class PostManager:
             if category is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail='There is no category found')
+                    detail='There is no category found'
+                )
 
             await db.execute(insert(Post).values(
                 title=create_post.title,
@@ -30,19 +31,17 @@ class PostManager:
 
             await db.commit()
 
+            return {
+                "status_code": status.HTTP_201_CREATED,
+                "transaction": "Success",
+            }
 
         except Exception as error:
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error during creating post: {str(error)}"
-
             )
-
-        return {
-            "status_code": status.HTTP_201_CREATED,
-            "transaction": "Success"
-        }
 
     @staticmethod
     async def get(
@@ -53,26 +52,21 @@ class PostManager:
             search: str | None = None
     ):
         try:
-            query = select(Post)
+            if search is None:
+                result = await db.scalars(select(Post).where(Post.category_id == category)
+                                          .limit(limit).offset(offset))
 
-            if category is not None:
-                query = query.where(Post.category_id == category)
+            else:
+                columns = func.coalesce(Post.title, '').concat(func.coalesce(Post.text, '')).self_group()
+                columns = columns.self_group()
 
-            if search:
-                search_query = func.plainto_tsquery('english', search)
-            query = query.where(
-                Post.search_vector.op('@@')(search_query).order_by(
-                    func.ts_rank(Post.search_vector, search_query).desc(),
-                    Post.id
+                res = await db.execute(
+                    select(Post, func.similarity(columns, search), )
+                    .where(columns.bool_op('%')(search), Post.category_id == category, )
+                    .order_by(func.similarity(columns, search).desc(), ).limit(limit).offset(offset)
                 )
-            )
-            query = query.limit(limit).offset(offset)
-
-            result = await db.execute(query)
-            posts = result.scalars().all()
-
-            return posts
-
+                result = res.scalars()
+            return result.all()
 
         except Exception as error:
             await db.rollback()

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Column, String, Integer, UUID, TIMESTAMP, ForeignKey, Index, schema, event
+from sqlalchemy import Column, String, Integer, UUID, TIMESTAMP, ForeignKey, event, func, cast
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
@@ -20,27 +20,3 @@ class Post(Base):
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=datetime.now(timezone.utc))
 
     category = relationship('Category', back_populates='posts')
-
-    search_vector = Column(TSVECTOR)
-
-    __table_args__ = (
-        Index(
-            'ix_posts_search',
-            'search_vector',
-            postgresql_using='gin'
-        ),
-    )
-
-
-event.listen(
-    Post.__table__,
-    'after_create',
-    schema.DDL(
-        "CREATE TRIGGER tsvector_update "
-        "BEFORE INSERT OR UPDATE "
-        "ON posts "
-        "FOR EACH ROW "
-        "EXECUTE PROCEDURE "
-        "tsvector_update_trigger(search_vector, 'public.pg_to_tsvector', title, text)"
-    )
-)
