@@ -4,11 +4,11 @@ from typing import Annotated
 
 from fastapi import HTTPException, status, Depends, UploadFile
 
-from sqlalchemy import select, insert, func
+from sqlalchemy import select, insert, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.db_depends import get_db
-from src.posts.models import Post
+from src.posts.models import Post, DeletedPost
 from src.categories.models import Category
 from src.posts.utils import MinioHandler
 from src.config import minio_bucket, minio_secret, minio_url, minio_access, valid_exceptions
@@ -165,7 +165,38 @@ class PostManager:
 
     @staticmethod
     async def delete(db, post_id):
-        pass
+        try:
+            post_for_delete = await db.scalar(select(Post).where(Post.id == post_id))
+            if post_for_delete is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='There is no post found'
+                )
+            await db.execute(insert(DeletedPost).values(
+                id=post_for_delete.id,
+                title=post_for_delete.title,
+                text=post_for_delete.text,
+                category_id=post_for_delete.category_id,
+                image_url=post_for_delete.image_url,
+                created_at=post_for_delete.created_at,
+            ))
+
+            await db.execute(
+                delete(Post).where(Post.id == post_id)
+            )
+
+            await db.commit()
+
+            return {
+                "status_code": status.HTTP_200_OK,
+                "detail": "Post successfully deleted"
+            }
+
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error during delete post: {str(error)}"
+            )
 
     @staticmethod
     async def get_all(db: Annotated[AsyncSession, Depends(get_db)]):
