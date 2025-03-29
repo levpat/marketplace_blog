@@ -31,7 +31,7 @@ async def get(db: Annotated[AsyncSession, Depends(get_db)],
 
 
 @post_router.post("/create")
-async def create_post(db: Annotated[AsyncSession, Depends(get_db)], post: CreatePost):
+async def create_post(db: Annotated[AsyncSession, Depends(get_db)], post: CreatePost = Depends()):
     return await pm.create(db, post)
 
 
@@ -41,7 +41,7 @@ async def get_all(db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @post_router.post('/s3/upload/test')
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File()):
     try:
         file_contents = await file.read()
 

@@ -23,3 +23,6 @@ minio_access = os.getenv("MINIO_ACCESS_KEY")
 minio_secret = os.getenv("MINIO_SECRET_KEY")
 minio_url = os.getenv("MINIO_URL")
 minio_bucket = os.getenv("MINIO_BUCKET")
+
+
+valid_exceptions = {'.png', '.jpg', '.jpeg', '.pdf'}

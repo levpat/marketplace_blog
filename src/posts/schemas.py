@@ -1,6 +1,8 @@
 import uuid
 from typing import Optional
 from datetime import datetime
+
+from fastapi import UploadFile, Form
 from pydantic import BaseModel
 
 
@@ -8,7 +10,7 @@ class CreatePost(BaseModel):
     title: str
     text: str
     category_id: Optional[int] = None
-    image_url: Optional[str] = None
+    image_url: UploadFile = Form()
 
 
 class Post(CreatePost):
