@@ -42,13 +42,13 @@ class PostManager:
                     detail='File size exceeds the limit (10 MB)'
 
                 )
-            file_name = f"{uuid.uuid4()}{file_extension}"
+            file_name = file.filename
 
             file_contents = await file.read()
             file_stream = BytesIO(file_contents)
             minio_client.upload_file(file_name, file_stream, len(file_contents))
 
-            url = f'{minio_url}/{minio_bucket}/{file.filename}'
+            url = f'http://{minio_url}/{minio_bucket}/{file.filename}'
             return url
 
         except Exception as error:
