@@ -1,13 +1,26 @@
-from sqlalchemy import func, String
-from sqlalchemy.types import TypeDecorator
+from typing import BinaryIO
+
+from minio import Minio
 
 
-class SearchableText(TypeDecorator):
-    impl = String
-    cache_ok = True
+class MinioHandler:
+    def __init__(self,
+                 minio_endpoint: str,
+                 access_key: str,
+                 secret_key: str,
+                 bucket: str,
+                 secure: bool = False):
+        self.client = Minio(
+            minio_endpoint,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=secure
+        )
+        self.bucket = bucket
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def upload_file(self, name: str, file: BinaryIO, length: int):
+        return self.client.put_object(self.bucket, name, file, length=length)
 
-    def column_expression(self, col):
-        return func.to_tsvector('english', col)
+    def list(self):
+        objects = list(self.client.list_objects(self.bucket))
+        return [{"name": i.object_name, "last_modified": i.last_modified} for i in objects]
