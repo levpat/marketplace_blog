@@ -1,5 +1,4 @@
 import os
-import uuid
 from io import BytesIO
 from typing import Annotated
 
@@ -121,6 +120,52 @@ class PostManager:
                 detail=f"Error during fetching post: {str(error)}"
 
             )
+
+    @staticmethod
+    async def update(db, post_id, update_post_model):
+        try:
+            image_url = await PostManager.get_upload_image_url(update_post_model.image_url)
+            category = await db.scalar(select(Category).where(Category.id == update_post_model.category_id))
+            if category is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='There is no category found'
+                )
+
+            update_post = await db.scalar(select(Post).where(Post.id == post_id))
+            if update_post is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Post not found"
+                )
+            category = await db.scalar(select(Category).where(Category.id == update_post_model.category_id))
+            if category is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='There is no category found'
+                )
+
+            update_post.title = update_post_model.title
+            update_post.text = update_post_model.text
+            update_post.category_id = update_post_model.category_id
+            update_post.image_url = image_url
+
+            await db.commit()
+
+            return {
+                "status_code": status.HTTP_201_CREATED,
+                "detail": "Post updated!"
+            }
+
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'Error during updating post: {str(error)}'
+            )
+
+    @staticmethod
+    async def delete(db, post_id):
+        pass
 
     @staticmethod
     async def get_all(db: Annotated[AsyncSession, Depends(get_db)]):
