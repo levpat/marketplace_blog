@@ -1,16 +1,13 @@
-import re
-
-from pydantic import BaseModel, EmailStr, validator
-
-letter_match_pattern = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+from fastapi import Form
+from pydantic import BaseModel, EmailStr
 
 
 class CreateUser(BaseModel):
-    first_name: str
-    last_name: str
-    username: str
-    email: EmailStr
-    password: str
+    first_name: str = Form()
+    last_name: str = Form()
+    username: str = Form()
+    email: EmailStr = Form()
+    password: str = Form()
 
 
 class CurrentUser(BaseModel):

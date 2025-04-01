@@ -3,8 +3,8 @@ from typing import Annotated
 
 import jwt
 from datetime import datetime, timezone, timedelta
-from celery import shared_task
-from fastapi import Depends, HTTPException, Request
+from celery import Celery
+from fastapi import Depends, HTTPException
 from fastapi.responses import Response
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from passlib.context import CryptContext
@@ -25,6 +25,13 @@ from src.users.models import Users
 ACCESS_TOKEN_EXPIRE_MINUTES = 20
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+celery = Celery(
+    __name__,
+    broker='redis://127.0.0.1:6379/0',
+    backend='redis://127.0.0.1:6379/0',
+    broker_connection_retry_on_startup=True
+)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=mail_address_2,
@@ -54,12 +61,13 @@ async def _send_email(email: EmailStr | str) -> dict:
     }
 
 
-@shared_task()
+@celery.task()
 def send_email(email: EmailStr | str) -> dict:
-    asyncio.run(_send_email(email))
-    return {
-        "task": "email sending"
-    }
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(_send_email(email))
+    loop.close()
+    return result
 
 
 async def authenticate_user(db: Annotated[AsyncSession, Depends(get_db)],
