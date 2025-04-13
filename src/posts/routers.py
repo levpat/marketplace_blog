@@ -1,41 +1,49 @@
-from typing import Annotated, List
+from typing import Annotated
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.db_depends import get_db
-from src.posts.schemas import Post, CreatePost, DeletedPost
-from src.posts.backend import pm
+from src.posts.schemas import GetPostSchema, ResponseModelPostSchema, CreatePostSchema
+from src.posts.service import PostService, get_post_service
 
 post_router = APIRouter(prefix='/posts', tags=['posts'])
 
 
-@post_router.get("/posts", response_model=List[Post])
-# @pagination
-async def get(db: Annotated[AsyncSession, Depends(get_db)],
-              limit: int = Query(10, ge=1, le=100),
-              offset: int = Query(0, ge=0),
-              category: int | None = Query(default=None),
-              search: str | None = Query(default=None)):
-    return await pm.get(db=db, limit=limit, offset=offset, category=category, search=search)
+@post_router.get("/", response_model=GetPostSchema)
+async def get(
+        post_service: Annotated[PostService, Depends(get_post_service)],
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1),
+        category: int | None = Query(default=None),
+        search: str | None = Query(default=None)
+) -> GetPostSchema:
+    return await post_service.get(page=page,
+                                  page_size=page_size,
+                                  category=category,
+                                  search=search)
 
 
-@post_router.post("/create")
-async def create_post(db: Annotated[AsyncSession, Depends(get_db)], post: CreatePost = Depends()):
-    return await pm.create(db, post)
+@post_router.post("/", response_model=ResponseModelPostSchema)
+async def create(
+        post_service: Annotated[PostService, Depends(get_post_service)],
+        create_post: CreatePostSchema
+) -> ResponseModelPostSchema:
+    return await post_service.create(create_post=create_post)
 
 
-@post_router.put("/{post_id}")
+@post_router.put("/", response_model=ResponseModelPostSchema)
 async def update(
-        db: Annotated[AsyncSession, Depends(get_db)],
+        post_service: Annotated[PostService, Depends(get_post_service)],
         post_id: str,
-        update_post_model: CreatePost = Depends()
-):
-    return await pm.update(db, post_id, update_post_model)
+        update_post: CreatePostSchema
+) -> ResponseModelPostSchema:
+    return await post_service.update(
+        post_id=post_id,
+        update_post=update_post
+    )
 
 
-@post_router.delete("/{post_id}")
+@post_router.delete("/", response_model=ResponseModelPostSchema)
 async def delete(
-        db: Annotated[AsyncSession, Depends(get_db)],
+        post_service: Annotated[PostService, Depends(get_post_service)],
         post_id: str
-):
-    await pm.delete(db, post_id)
+) -> ResponseModelPostSchema:
+    return await post_service.delete(post_id=post_id)

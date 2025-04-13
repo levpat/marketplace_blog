@@ -5,13 +5,13 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.backend import create_access_token, authenticate_user, get_current_user, set_token
-from src.backend.db_depends import get_db
+from src.backend.db_depends import get_session
 
 auth_router = APIRouter(prefix='/auth', tags=['auth'])
 
 
 @auth_router.post("/login")
-async def login(response: Response, db: Annotated[AsyncSession, Depends(get_db)],
+async def login(response: Response, db: Annotated[AsyncSession, Depends(get_session)],
                 form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> dict:
     user = await authenticate_user(db, form_data.username, form_data.password)
     data = {

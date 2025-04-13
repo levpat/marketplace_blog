@@ -1,20 +1,25 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.db_depends import get_db
-from src.categories.schemas import CreateCategory
-from src.categories.backend import cm
+from src.backend.db_depends import get_session
+from src.categories.schemas import CreateCategorySchema, CategorySchema, GetCategoriesSchema
+from src.categories.service import get_category_service, CategoryService
 
 category_router = APIRouter(prefix='/categories', tags=['categories'])
 
 
-@category_router.get('/')
-async def get(db: Annotated[AsyncSession, Depends(get_db)]):
-    return await cm.get(db)
+@category_router.get('/', response_model=GetCategoriesSchema, status_code=status.HTTP_200_OK)
+async def get(
+        category_srvice: Annotated[CategoryService, Depends(get_category_service)]
+) -> GetCategoriesSchema:
+    return await category_srvice.get()
 
 
-@category_router.post('/create')
-async def post(db: Annotated[AsyncSession, Depends(get_db)], create_category: CreateCategory):
-    return await cm.create(db, create_category)
+@category_router.post('/create', response_model=CategoryService, status_code=status.HTTP_201_CREATED)
+async def create(
+        category_service: Annotated[CategoryService, Depends(get_category_service)],
+        create_category: CreateCategorySchema
+) -> CategorySchema:
+    return await category_service.create(create_category)

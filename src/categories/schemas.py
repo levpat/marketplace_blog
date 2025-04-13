@@ -1,10 +1,18 @@
 from pydantic import BaseModel
 
 
-class CreateCategory(BaseModel):
+class CreateCategorySchema(BaseModel):
     title: str
 
 
-class Category(CreateCategory):
-    title: str
+
+
+class CategorySchema(CreateCategorySchema):
     id: int
+
+    class Config:
+        from_attributes = True
+
+
+class GetCategoriesSchema(BaseModel):
+    categories: list[CategorySchema]

@@ -15,7 +15,7 @@ from starlette import status
 from starlette.requests import Request
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from src.backend.db_depends import get_db
+from src.backend.db_depends import get_session
 
 from src.config import (
     mail_pass_for_google, smtp_google, mail_address_2,
@@ -70,7 +70,7 @@ def send_email(email: EmailStr | str) -> dict:
     return result
 
 
-async def authenticate_user(db: Annotated[AsyncSession, Depends(get_db)],
+async def authenticate_user(db: Annotated[AsyncSession, Depends(get_session)],
                             username: str, password: str):
     user = await db.scalar(select(Users).where(Users.username == username))
     if not user or not bcrypt_context.verify(password, user.hashed_password) or not user.is_active:

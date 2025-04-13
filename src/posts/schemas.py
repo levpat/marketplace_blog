@@ -1,31 +1,40 @@
 import uuid
-from typing import Optional
 from datetime import datetime
 
 from fastapi import UploadFile, Form
 from pydantic import BaseModel
 
 
-class CreatePost(BaseModel):
+class BasePostSchema(BaseModel):
     title: str
+    category_id: int | None
+    image_url: str | None
+
+
+class CreatePostSchema(BasePostSchema):
     text: str
-    category_id: Optional[int] = None
-    image_url: UploadFile = Form()
+    image: UploadFile = Form()
 
 
-class Post(CreatePost):
+class PostSchema(BasePostSchema):
     id: uuid.UUID = uuid.uuid4()
-    title: str
-    category_id: Optional[int] = None
-    image_url: Optional[str] = None
+    text: str
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
 
 
-class DeletedPost(Post):
-    id: uuid.UUID = uuid.uuid4()
-    title: str
-    category_id: Optional[int] = None
-    image_url: Optional[str] = None
-    created_at: datetime
+class GetPostSchema(BaseModel):
+    posts: list[PostSchema]
+
+
+class DeletedPostSchema(PostSchema):
     deleted_at: datetime
+
+
+class ResponseModelPostSchema(BaseModel):
+    status_code: int
+    detail: str
+    data: list[PostSchema]
