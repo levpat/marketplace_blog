@@ -1,6 +1,7 @@
 from typing import BinaryIO
-
 from minio import Minio
+
+from src.config import minio_bucket, minio_secret, minio_url, minio_access
 
 
 class MinioHandler:
@@ -24,3 +25,12 @@ class MinioHandler:
     def list(self):
         objects = list(self.client.list_objects(self.bucket))
         return [{"name": i.object_name, "last_modified": i.last_modified} for i in objects]
+
+def get_minio_handler() -> MinioHandler:
+    return MinioHandler(
+    minio_url,
+    minio_access,
+    minio_secret,
+    minio_bucket,
+    False
+    )

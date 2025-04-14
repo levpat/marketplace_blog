@@ -9,7 +9,7 @@ from src.associations.models import PostCategories
 
 
 class Post(Base):
-    __table_name__ = "posts"
+    __tablename__ = "posts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     title = Column(String, nullable=False)
@@ -23,7 +23,7 @@ class Post(Base):
 
 
 class DeletedPost(Base):
-    __table_name__ = "deleted_posts"
+    __tablename__ = "deleted_posts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     title = Column(String, nullable=False)

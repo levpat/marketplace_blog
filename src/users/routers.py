@@ -1,15 +1,16 @@
-from fastapi import APIRouter, status
+from typing import Annotated
+from fastapi import APIRouter, status, Depends
 
 from src.auth.backend import send_email
 from src.users.schemas import ResponseModelUserSchema, CreateUserSchema
-from src.users.service import UserService
+from src.users.service import UserService, get_user_service
 
 user_router = APIRouter(prefix='/users', tags=['users'])
 
 
 @user_router.post("/", response_model=ResponseModelUserSchema)
 async def create(
-        user_service: UserService,
+        user_service: Annotated[UserService, Depends(get_user_service)],
         create_user: CreateUserSchema
 ) -> ResponseModelUserSchema:
     user = await user_service.create(create_user=create_user)

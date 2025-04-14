@@ -6,16 +6,8 @@ from fastapi import UploadFile, HTTPException, status, Depends
 
 from src.posts.repository import PostRepository, get_post_repository
 from src.posts.schemas import CreatePostSchema, ResponseModelPostSchema, GetPostSchema
-from src.posts.utils import MinioHandler
-from src.config import minio_bucket, minio_secret, minio_url, minio_access, valid_exceptions
-
-minio_client = MinioHandler(
-    minio_url,
-    minio_access,
-    minio_secret,
-    minio_bucket,
-    False
-)
+from src.posts.utils import MinioHandler, get_minio_handler
+from src.config import minio_bucket, minio_url, valid_exceptions
 
 
 class PostService:
@@ -107,6 +99,6 @@ class PostService:
 
 def get_post_service(
         repository: Annotated[PostRepository, Depends(get_post_repository)],
-        client: Annotated[MinioHandler, Depends(minio_client)]
+        client: Annotated[MinioHandler, Depends(get_minio_handler)]
 ) -> PostService:
     return PostService(repository, client)

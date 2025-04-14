@@ -33,4 +33,4 @@ class CurrentUserSchema(BaseModel):
 class ResponseModelUserSchema(BaseModel):
     status_code: int
     detail: str
-    data: list[UserSchema]
+    data: list
