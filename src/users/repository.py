@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.db_depends import get_session
@@ -26,6 +27,12 @@ class UserRepository:
         self.session.add(user)
         await self.session.commit()
         return [user]
+
+    async def get_user_for_authenticate(self,
+                                        username: str) -> Users:
+        user = await self.session.scalar(select(Users) \
+                                         .where(username == Users.username))
+        return user
 
 
 def get_user_repository(

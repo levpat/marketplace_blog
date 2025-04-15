@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from config import host, port
-from src.auth.backend import JWTMiddleware
+from src.auth.service import JWTMiddleware
 from src.categories.routers import category_router
 from src.users.routers import user_router
 from src.auth.routers import auth_router

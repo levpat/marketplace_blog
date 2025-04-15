@@ -1,6 +1,8 @@
 import os
 import dotenv
 
+from passlib.context import CryptContext
+
 dotenv.load_dotenv()
 
 db_url = os.getenv('DB_URL')
@@ -21,3 +23,10 @@ minio_url = os.getenv("MINIO_URL")
 minio_bucket = os.getenv("MINIO_BUCKET")
 
 valid_exceptions = {'.png', '.jpg', '.jpeg', '.pdf'}
+
+broker = os.getenv("BROKER")
+backend = os.getenv("BACKEND")
+
+access_token_expire_minutes = 20
+
+bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')

@@ -1,9 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
 
-from src.auth.backend import send_email
 from src.users.schemas import ResponseModelUserSchema, CreateUserSchema
-from src.users.service import UserService, get_user_service
+from src.users.service import UserService, get_user_service, send_email
 
 user_router = APIRouter(prefix='/users', tags=['users'])
 
