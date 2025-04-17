@@ -47,7 +47,7 @@ class AuthService:
                                 response: Response
                                 ) -> GetAuthDataResponseModel:
         user = await self.repository.get_user_for_authenticate(username)
-        if not user or not bcrypt_context.verify(password, user.hashed_password) or not user.is_active:
+        if not user or not bcrypt_context.verify(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
@@ -57,7 +57,8 @@ class AuthService:
             "clientID": str(user.id),
             "username": user.username,
             "name": user.first_name,
-            "email": user.email
+            "email": user.email,
+            "role": user.role
         }
         token = self.create_access_token(data)
         self.set_token(response, token)

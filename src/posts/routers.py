@@ -12,12 +12,12 @@ async def get(
         post_service: Annotated[PostService, Depends(get_post_service)],
         page: int = Query(1, ge=1),
         page_size: int = Query(10, ge=1),
-        category: int | None = Query(default=None),
+        categories: list[str] = Query(default=None),
         search: str | None = Query(default=None)
 ) -> GetPostSchema:
     return await post_service.get(page=page,
                                   page_size=page_size,
-                                  category=category,
+                                  category=categories,
                                   search=search)
 
 

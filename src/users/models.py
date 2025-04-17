@@ -20,4 +20,3 @@ class Users(Base):
     email = Column(String, nullable=False, unique=True)
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.user)
-    is_active = Column(Boolean, default=True)
