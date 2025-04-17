@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Sequence
 
 from fastapi import UploadFile, Form
 from pydantic import BaseModel
@@ -7,12 +8,12 @@ from pydantic import BaseModel
 
 class BasePostSchema(BaseModel):
     title: str
-    category_id: int | None
     image_url: str | None
 
 
 class CreatePostSchema(BasePostSchema):
     text: str
+    categories: list[str]
     image: UploadFile = Form()
 
 
@@ -27,7 +28,7 @@ class PostSchema(BasePostSchema):
 
 
 class GetPostSchema(BaseModel):
-    posts: list[PostSchema]
+    posts: Sequence[PostSchema]
 
 
 class DeletedPostSchema(PostSchema):

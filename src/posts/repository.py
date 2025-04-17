@@ -1,9 +1,11 @@
-from typing import Annotated
+from typing import Annotated, Sequence
 from fastapi import HTTPException, status, Depends
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.associations.models import PostCategories
 from src.backend.db_depends import get_session
+from src.categories.models import Category
 from src.posts.models import Post, DeletedPost
 
 
@@ -15,13 +17,30 @@ class PostRepository:
     async def create(self,
                      title: str,
                      text: str,
-                     category_id: int | None,
+                     categories: list[str],
                      image_url: str | None) -> Post:
+        existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories))).all()
+
+        if len(existing_categories) != len(categories):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Some categories not found"
+            )
+
         post = Post(title=title,
                     text=text,
-                    category_id=category_id,
                     image_url=image_url)
+
+        category_ids = [category.id for category in existing_categories]
+        post_categories_links = [
+            PostCategories(
+                post_id=post.id,
+                category_id=category_id
+            ) for category_id in category_ids
+        ]
+
         self.session.add(post)
+        self.session.add_all(post_categories_links)
         await self.session.commit()
 
         return post
@@ -29,25 +48,39 @@ class PostRepository:
     async def get(self,
                   page: int,
                   page_size: int,
-                  category: int | None,
+                  categories: list[str],
                   search: str | None
-                  ) -> list[Post]:
-        if search is None:
-            result = await self.session.scalars(select(Post).where(category == Post.category_id)
-                                                .limit(page_size).offset((page - 1) * page_size))
-        else:
-            columns = func.coalesce(Post.title, '').concat(func.coalesce(Post.text, '')).self_group()
-            columns = columns.self_group()
+                  ) -> Sequence[Post]:
 
-            res = await self.session.execute(
-                select(Post, func.similarity(columns, search), )
-                .where(columns.bool_op('%')(search), category == Post.category_id, )
-                .order_by(func.similarity(columns, search).desc(), ).limit(page_size).offset((page - 1) * page_size)
+        existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories))).all()
+        if len(categories) != len(existing_categories):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Some categories not found"
             )
 
-            result = res.scalars()
-        posts = result.all()
-        return posts
+        query = select(Post)
+
+        if existing_categories:
+            category_ids = [category.id for category in existing_categories]
+            query = query.join(PostCategories).where(PostCategories.category_id.in_(category_ids))
+
+        if search:
+            columns = (
+                func.coalesce(Post.title, '').concat(func.coalesce(Post.text, ''))
+                .self_group()
+            )
+            query = (
+                query.select_from(Post)
+                .where(columns.bool_op('%')(search))
+                .order_by(func.similarity(columns, search).desc())
+            )
+
+        query = query.limit(page_size).offset((page - 1) * page_size)
+
+        posts = await self.session.scalars(query)
+
+        return posts.all()
 
     async def update(self,
                      post_id: str,
@@ -86,7 +119,6 @@ class PostRepository:
             id=post_for_delete.id,
             title=post_for_delete.title,
             text=post_for_delete.text,
-            category_id=post_for_delete.category_id,
             image_url=post_for_delete.image_url,
             created_at=post_for_delete.created_at)
 
