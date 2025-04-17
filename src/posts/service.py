@@ -43,11 +43,10 @@ class PostService:
     async def get(self,
                   page: int,
                   page_size: int,
-                  category: int | None,
+                  categories: list[str],
                   search: str | None) -> GetPostSchema:
         posts = await self.repository.get(page=page,
                                           page_size=page_size,
-                                          category=category,
                                           search=search)
         return GetPostSchema(
             posts=posts
@@ -58,7 +57,7 @@ class PostService:
                      ) -> ResponseModelPostSchema:
         post = await self.repository.create(title=create_post.title,
                                             text=create_post.text,
-                                            category_id=create_post.category.id,
+                                            categories=create_post.categories,
                                             image_url=await self.get_upload_image_url(create_post.image)
                                             )
         return ResponseModelPostSchema(
@@ -76,7 +75,7 @@ class PostService:
             post_id=post_id,
             title=update_post.title,
             text=update_post.text,
-            category_id=update_post.category_id,
+            categories=update_post.categories,
             image_url=await self.get_upload_image_url(update_post.image)
         )
         return ResponseModelPostSchema(
@@ -93,7 +92,7 @@ class PostService:
         return ResponseModelPostSchema(
             status_code=status.HTTP_200_OK,
             detail="Post delete",
-            data=[post]
+            data=post
         )
 
 

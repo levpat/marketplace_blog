@@ -1,7 +1,13 @@
 import uuid
+import enum
 from src.backend.db import Base
 
-from sqlalchemy import Column, UUID, String, Boolean
+from sqlalchemy import Column, UUID, String, Boolean, Enum
+
+
+class UserRole(str, enum.Enum):
+    user = "user"
+    admin = "admin"
 
 
 class Users(Base):
@@ -13,5 +19,5 @@ class Users(Base):
     username = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     hashed_password = Column(String, nullable=False)
-    is_admin = Column(Boolean, default=False)
+    role = Column(Enum(UserRole), default=UserRole.user)
     is_active = Column(Boolean, default=True)
