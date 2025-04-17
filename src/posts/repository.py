@@ -24,13 +24,15 @@ class PostRepository:
 
         if len(existing_categories) != len(categories):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Some categories not found"
             )
 
         post = Post(title=title,
                     text=text,
                     image_url=image_url)
+
+        await self.session.flush()
 
         category_ids = [category.id for category in existing_categories]
         post_categories_links = [
@@ -58,7 +60,7 @@ class PostRepository:
 
         if len(categories) != len(existing_categories):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Some categories not found"
             )
 
@@ -95,7 +97,7 @@ class PostRepository:
 
         if post_for_update is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Post not found"
             )
 
@@ -134,12 +136,19 @@ class PostRepository:
         return [post_for_update]
 
     async def delete(self, post_id: str) -> list[DeletedPost]:
+
         post_for_delete = await self.session.scalar(select(Post).where(post_id == Post.id))
+
         if post_for_delete is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Post not found"
             )
+
+        await self.session.execute(
+            delete(PostCategories)
+            .where(post_id == PostCategories.post_id)
+        )
 
         await self.session.execute(delete(Post).where(post_id == Post.id))
 
