@@ -8,17 +8,19 @@ from starlette.requests import Request
 
 from src.auth.schemas import GetAuthDataResponseModel
 from src.users.repository import UserRepository, get_user_repository
-from src.config import bcrypt_context, access_token_expire_minutes, \
-    secret, alg
+from src.config import get_settings, Settings
 
 
 class AuthService:
     def __init__(self,
-                 repository: UserRepository):
+                 repository: UserRepository,
+                 settings: Settings):
+        self.settings = settings
         self.repository = repository
 
     @staticmethod
     def create_access_token(
+            settings: Annotated[Settings, Depends(get_settings)],
             data: dict,
             expires_delta: timedelta | None = None
     ) -> str:
@@ -26,9 +28,9 @@ class AuthService:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=access_token_expire_minutes)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
         to_encode.update({"exp": expire})
-        return jwt.encode(to_encode, secret, algorithm=alg)
+        return jwt.encode(to_encode, settings.secret, algorithm=settings.alg)
 
     @staticmethod
     def set_token(
@@ -47,7 +49,7 @@ class AuthService:
                                 response: Response
                                 ) -> GetAuthDataResponseModel:
         user = await self.repository.get_user_for_authenticate(username)
-        if not user or not bcrypt_context.verify(password, user.hashed_password):
+        if not user or not self.settings.bcrypt_context.verify(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
@@ -71,14 +73,21 @@ class AuthService:
 
 
 def get_auth_service(
-        repository: Annotated[UserRepository, Depends(get_user_repository)]
+        repository: Annotated[UserRepository, Depends(get_user_repository)],
+        settings: Annotated[Settings, Depends(get_settings)]
 ) -> AuthService:
-    return AuthService(repository)
+    return AuthService(
+        repository=repository,
+        settings=settings
+    )
 
 
 class JWTMiddleware:
-    def __init__(self, app: ASGIApp):
+    def __init__(self,
+                 app: ASGIApp,
+                 settings: Annotated[Settings, Depends(get_settings)]):
         self.app = app
+        self.settings = settings
         self.exclude_paths = {
             "/docs",
             "/openapi.json",
@@ -106,7 +115,7 @@ class JWTMiddleware:
             )
 
         try:
-            payload = jwt.decode(token, secret, algorithms=[alg])
+            payload = jwt.decode(token, self.settings.secret, algorithms=[self.settings.alg])
             scope["user"] = payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(

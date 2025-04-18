@@ -4,7 +4,6 @@ from fastapi import Form
 from pydantic import BaseModel, EmailStr
 
 
-
 class CreateUserSchema(BaseModel):
     first_name: str = Form()
     last_name: str = Form()
@@ -22,7 +21,7 @@ class UserSchema(BaseModel):
     is_admin: bool
 
     class Config:
-        from_attributes=True
+        from_attributes = True
 
 
 class CurrentUserSchema(BaseModel):

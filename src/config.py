@@ -1,32 +1,32 @@
-import os
-import dotenv
-
 from passlib.context import CryptContext
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
 
-dotenv.load_dotenv()
 
-db_url = os.getenv('DB_URL')
+class Settings(BaseSettings):
+    db_url: str
+    host: str
+    port: int
+    secret_key: str
+    alg: str
+    mail_address_for_google: str
+    mail_pass_for_google: str
+    smtp_2: str
+    minio_access_key: str
+    minio_secret_key: str
+    minio_url: str
+    minio_bucket: str
+    broker: str
+    backend: str
+    valid_exceptions: tuple = {'.png', '.jpg', '.jpeg', '.pdf'}
+    access_token_expire_minutes: int = 20
+    bcrypt_context: CryptContext = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-host = os.getenv('HOST')
-port = int(os.getenv('PORT'))
+    model_config = SettingsConfigDict(
+        env_file="../.env"
+    )
 
-secret = os.getenv("SECRET_KEY")
-alg = os.getenv("ALGORITHM")
 
-mail_address_2 = os.getenv("MAIL_ADDRESS_FOR_GOOGLE")
-mail_pass_for_google = os.getenv("MAIL_PASS_FOR_GOOGLE")
-smtp_google = os.getenv("SMTP_2")
-
-minio_access = os.getenv("MINIO_ACCESS_KEY")
-minio_secret = os.getenv("MINIO_SECRET_KEY")
-minio_url = os.getenv("MINIO_URL")
-minio_bucket = os.getenv("MINIO_BUCKET")
-
-valid_exceptions = {'.png', '.jpg', '.jpeg', '.pdf'}
-
-broker = os.getenv("BROKER")
-backend = os.getenv("BACKEND")
-
-access_token_expire_minutes = 20
-
-bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+@lru_cache
+def get_settings():
+    return Settings()

@@ -5,8 +5,6 @@ class CreateCategorySchema(BaseModel):
     title: str
 
 
-
-
 class CategorySchema(CreateCategorySchema):
     id: int
 
