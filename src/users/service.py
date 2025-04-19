@@ -79,18 +79,12 @@ def get_email_service(
     return EmailService(conf)
 
 
-def get_celery(
-        settings: Annotated[Settings, Depends(get_settings)]
-) -> Celery:
-    return Celery(
-        __name__,
-        broker=settings.broker,
-        backend=settings.backend,
-        broker_connection_retry_on_startup=True
-    )
-
-
-celery = get_celery(get_settings())
+celery = Celery(
+    __name__,
+    broker=get_settings().broker,
+    backend=get_settings().backend,
+    broker_connection_retry_on_startup=True
+)
 
 
 @celery.task()

@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     bcrypt_context: CryptContext = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
     model_config = SettingsConfigDict(
-        env_file="../.env"
+        env_file="../.env",
+        extra="forbid",
+        validate_assignment=True
     )
 
 

@@ -8,11 +8,8 @@ from src.users.routers import user_router
 from src.auth.routers import auth_router
 from src.posts.routers import post_router
 
-
-settings = get_settings()
-
 app = FastAPI()
-app.add_middleware(JWTMiddleware)
+app.add_middleware(JWTMiddleware, settings=get_settings())
 
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -21,6 +18,6 @@ app.include_router(category_router)
 
 if __name__ == "__main__":
     uvicorn.run('src.main:app',
-                host=settings.host,
-                port=settings.port,
+                host=get_settings().host,
+                port=get_settings().port,
                 reload=True)
