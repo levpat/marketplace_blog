@@ -19,6 +19,10 @@ class PostRepository:
                      text: str,
                      categories: list[str],
                      image_url: str) -> Post:
+
+        if isinstance(categories, list) and len(categories) == 1:
+            categories = categories[0].split(',')
+
         existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories)))
         existing_categories = existing_categories.all()
 
@@ -31,7 +35,7 @@ class PostRepository:
         post = Post(title=title,
                     text=text,
                     image_url=image_url)
-
+        self.session.add(post)
         await self.session.flush()
 
         category_ids = [category.id for category in existing_categories]
@@ -42,7 +46,6 @@ class PostRepository:
             ) for category_id in category_ids
         ]
 
-        self.session.add(post)
         self.session.add_all(post_categories_links)
         await self.session.commit()
 

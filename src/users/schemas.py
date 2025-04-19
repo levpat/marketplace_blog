@@ -18,7 +18,7 @@ class UserSchema(BaseModel):
     last_name: str
     username: str
     email: str
-    is_admin: bool
+    role: str
 
     class Config:
         from_attributes = True
@@ -26,10 +26,10 @@ class UserSchema(BaseModel):
 
 class CurrentUserSchema(BaseModel):
     id: str
-    is_admin: bool | None
+    role: str
 
 
 class ResponseModelUserSchema(BaseModel):
     status_code: int
     detail: str
-    data: list
+    data: list[UserSchema]

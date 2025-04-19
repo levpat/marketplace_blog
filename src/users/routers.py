@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, status, Depends
 
 from src.users.schemas import ResponseModelUserSchema, CreateUserSchema
-from src.users.service import UserService, get_user_service, send_email
+from src.users.service import UserService, get_user_service, broker
 
 user_router = APIRouter(prefix='/users', tags=['users'])
 
@@ -13,7 +13,12 @@ async def create(
         create_user: Annotated[CreateUserSchema, Depends()]
 ) -> ResponseModelUserSchema:
     user = await user_service.create(create_user=create_user)
-    send_email.delay(email=create_user.email)
+
+    await broker.publish(
+        message=create_user.email,
+        channel="email_channel"
+    )
+
     return ResponseModelUserSchema(
         status_code=status.HTTP_201_CREATED,
         detail="User create",

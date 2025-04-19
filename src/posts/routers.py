@@ -24,7 +24,7 @@ async def get(
 @post_router.post("/", response_model=ResponseModelPostSchema)
 async def create(
         post_service: Annotated[PostService, Depends(get_post_service)],
-        create_post: CreatePostSchema
+        create_post: CreatePostSchema = Depends()
 ) -> ResponseModelPostSchema:
     return await post_service.create(create_post=create_post)
 

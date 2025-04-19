@@ -1,17 +1,26 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 
-from src.config import get_settings
+from src.config import host, port
 from src.auth.service import JWTMiddleware
 from src.categories.routers import category_router
 from src.users.routers import user_router
 from src.auth.routers import auth_router
 from src.posts.routers import post_router
+from src.users.service import broker
 
 
-settings = get_settings()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await broker.start()
+    yield
+    await broker.close()
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(JWTMiddleware)
 
 app.include_router(user_router)
@@ -21,6 +30,6 @@ app.include_router(category_router)
 
 if __name__ == "__main__":
     uvicorn.run('src.main:app',
-                host=settings.host,
-                port=settings.port,
+                host=host,
+                port=port,
                 reload=True)

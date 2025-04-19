@@ -1,24 +1,23 @@
-import asyncio
 from typing import Annotated
 
-from celery import Celery
-from fastapi import Depends
+from fastapi import Depends, FastAPI
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+from faststream.redis import RedisBroker
 from pydantic import EmailStr
-from starlette import status
+from contextlib import asynccontextmanager
 
 from src.users.models import Users
 from src.users.repository import UserRepository, get_user_repository
 from src.users.schemas import CreateUserSchema
-from src.config import get_settings, Settings
+from src.config import bcrypt_context, redis_url, pass_yandex, mail_yandex, smtp_ya
+
+broker = RedisBroker(redis_url)
 
 
 class UserService:
     def __init__(self,
-                 repository: UserRepository,
-                 settings: Settings):
+                 repository: UserRepository):
         self.repository = repository
-        self.settings = settings
 
     async def create(self,
                      create_user: CreateUserSchema
@@ -27,18 +26,16 @@ class UserService:
                                             last_name=create_user.last_name,
                                             username=create_user.username,
                                             email=str(create_user.email),
-                                            password=self.settings.bcrypt_context.hash(create_user.password))
+                                            password=bcrypt_context.hash(create_user.password))
 
         return user
 
 
 def get_user_service(
-        repository: Annotated[UserRepository, Depends(get_user_repository)],
-        settings: Annotated[Settings, Depends(get_settings)]
+        repository: Annotated[UserRepository, Depends(get_user_repository)]
 ) -> UserService:
     return UserService(
-        repository=repository,
-        settings=settings
+        repository=repository
     )
 
 
@@ -59,47 +56,22 @@ class EmailService:
         )
         await self.fm.send_message(message)
         return {
-            "status_code": status.HTTP_200_OK,
             "detail": "Success"
         }
 
 
-def get_email_service(
-        settings: Annotated[Settings, Depends(get_settings)]
-) -> EmailService:
+@broker.subscriber("email_channel")
+async def handle_email_task(
+        email: str
+) -> None:
     conf = ConnectionConfig(
-        MAIL_USERNAME=settings.mail_address_2,
-        MAIL_PASSWORD=settings.mail_pass_for_google,
-        MAIL_PORT=587,
-        MAIL_SERVER=settings.smtp_google,
-        MAIL_STARTTLS=True,
-        MAIL_SSL_TLS=False,
-        MAIL_FROM=settings.mail_address_2,
+        MAIL_USERNAME=mail_yandex,
+        MAIL_PASSWORD=pass_yandex,
+        MAIL_PORT=465,
+        MAIL_SERVER=smtp_ya,
+        MAIL_STARTTLS=False,
+        MAIL_SSL_TLS=True,
+        MAIL_FROM=mail_yandex,
     )
-    return EmailService(conf)
-
-
-def get_celery(
-        settings: Annotated[Settings, Depends(get_settings)]
-) -> Celery:
-    return Celery(
-        __name__,
-        broker=settings.broker,
-        backend=settings.backend,
-        broker_connection_retry_on_startup=True
-    )
-
-
-celery = get_celery(get_settings())
-
-
-@celery.task()
-def send_email(
-        email_service: Annotated[EmailService, Depends(get_email_service)],
-        email: EmailStr | str
-) -> dict:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(email_service.send_mail(email))
-    loop.close()
-    return result
+    email_service = EmailService(conf)
+    await email_service.send_mail(email)

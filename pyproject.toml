@@ -27,6 +27,7 @@ dependencies = [
     "asgiref (>=3.8.1,<4.0.0)",
     "gevent (>=25.4.1,<26.0.0)",
     "pydantic-settings (>=2.9.0,<3.0.0)",
+    "faststream[cli] (>=0.5.39,<0.6.0)",
 ]
 
 

@@ -1,8 +1,7 @@
-from typing import BinaryIO, Annotated
+from typing import BinaryIO
 from minio import Minio
-from fastapi import Depends
 
-from src.config import get_settings, Settings
+from src.config import minio_url, minio_bucket, minio_access, minio_secret
 
 
 class MinioHandler:
@@ -28,13 +27,11 @@ class MinioHandler:
         return [{"name": i.object_name, "last_modified": i.last_modified} for i in objects]
 
 
-def get_minio_handler(
-        settings: Annotated[Settings, Depends(get_settings)]
-) -> MinioHandler:
+def get_minio_handler() -> MinioHandler:
     return MinioHandler(
-        settings.minio_url,
-        settings.minio_access,
-        settings.minio_secret,
-        settings.minio_bucket,
+        minio_url,
+        minio_access,
+        minio_secret,
+        minio_bucket,
         False
     )

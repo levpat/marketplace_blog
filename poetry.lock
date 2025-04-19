@@ -619,6 +619,22 @@ dnspython = ">=2.0.0"
 idna = ">=2.0.0"
 
 [[package]]
+name = "fast-depends"
+version = "2.4.12"
+description = "FastDepends - extracted and cleared from HTTP domain logic FastAPI Dependency Injection System. Async and sync are both supported."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "fast_depends-2.4.12-py3-none-any.whl", hash = "sha256:9e5d110ddc962329e46c9b35e5fe65655984247a13ee3ca5a33186db7d2d75c2"},
+    {file = "fast_depends-2.4.12.tar.gz", hash = "sha256:9393e6de827f7afa0141e54fa9553b737396aaf06bd0040e159d1f790487b16d"},
+]
+
+[package.dependencies]
+anyio = ">=3.0.0,<5.0.0"
+pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<3.0.0"
+
+[[package]]
 name = "fastapi"
 version = "0.115.12"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -663,6 +679,42 @@ starlette = ">=0.24,<1.0"
 [package.extras]
 httpx = ["httpx[httpx] (>=0.23,<0.24)"]
 redis = ["redis[redis] (>=4.3,<5.0)"]
+
+[[package]]
+name = "faststream"
+version = "0.5.39"
+description = "FastStream: the simplest way to work with a messaging queues"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "faststream-0.5.39-py3-none-any.whl", hash = "sha256:5928e9e85d3e2a06a0780e068b0ddc1081a13c802789e0684df3971dbcc816e2"},
+    {file = "faststream-0.5.39.tar.gz", hash = "sha256:fe13ed5d643043682c19867e918e0edb552755e284cc1c9e3595cf760c335a0c"},
+]
+
+[package.dependencies]
+anyio = ">=3.7.1,<5"
+fast-depends = ">=2.4.0b0,<3.0.0"
+typer = {version = ">=0.9,<0.12 || >0.12,<=0.15.2", optional = true, markers = "extra == \"cli\""}
+typing-extensions = ">=4.8.0"
+watchfiles = {version = ">=0.15.0,<1.1.0", optional = true, markers = "extra == \"cli\""}
+
+[package.extras]
+cli = ["typer (>=0.9,!=0.12,<=0.15.2)", "watchfiles (>=0.15.0,<1.1.0)"]
+confluent = ["confluent-kafka (>=2,!=2.8.1,<3) ; python_version < \"3.13\"", "confluent-kafka (>=2.6,!=2.8.1,<3) ; python_version >= \"3.13\""]
+dev = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10) ; python_version < \"3.9\"", "bandit (==1.8.3) ; python_version >= \"3.9\"", "cairosvg", "codespell (==2.4.1)", "confluent-kafka (>=2,!=2.8.1,<3) ; python_version < \"3.13\"", "confluent-kafka (>=2.6,!=2.8.1,<3) ; python_version >= \"3.13\"", "confluent-kafka-stubs ; python_version >= \"3.11\"", "coverage[toml] (==7.6.1) ; python_version < \"3.9\"", "coverage[toml] (==7.8.0) ; python_version >= \"3.9\"", "detect-secrets (==1.5.0)", "dirty-equals (==0.9.0)", "email-validator (==2.2.0)", "fastapi (==0.115.12)", "httpx (==0.28.1)", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.11)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1) ; python_version < \"3.9\"", "mkdocstrings[python] (==0.29.1) ; python_version >= \"3.9\"", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "pillow", "pre-commit (==3.5.0) ; python_version < \"3.9\"", "pre-commit (==4.2.0) ; python_version >= \"3.9\"", "prometheus-client (>=0.20.0,<0.30.0)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest (==8.3.5)", "pytest-asyncio (==0.24.0) ; python_version < \"3.9\"", "pytest-asyncio (==0.26.0) ; python_version >= \"3.9\"", "pyyaml (==6.0.2)", "redis (>=5.0.0,<6.0.0)", "requests", "ruff (==0.11.4)", "semgrep (==1.117.0) ; python_version >= \"3.9\"", "semgrep (==1.99.0) ; python_version < \"3.9\"", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "typing-extensions (>=4.8.0,<4.12.1) ; python_version < \"3.9\"", "watchfiles (>=0.15.0,<1.1.0)"]
+devdocs = ["cairosvg", "mdx-include (==1.4.2)", "mike (==2.1.3)", "mkdocs-git-revision-date-localized-plugin (==1.4.5)", "mkdocs-glightbox (==0.4.0)", "mkdocs-literate-nav (==0.6.2)", "mkdocs-macros-plugin (==1.3.7)", "mkdocs-material (==9.6.11)", "mkdocs-minify-plugin (==0.8.0)", "mkdocs-static-i18n (==1.3.0)", "mkdocstrings[python] (==0.26.1) ; python_version < \"3.9\"", "mkdocstrings[python] (==0.29.1) ; python_version >= \"3.9\"", "pillow", "requests"]
+kafka = ["aiokafka (>=0.9,<0.13)"]
+lint = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "bandit (==1.7.10) ; python_version < \"3.9\"", "bandit (==1.8.3) ; python_version >= \"3.9\"", "codespell (==2.4.1)", "confluent-kafka (>=2,!=2.8.1,<3) ; python_version < \"3.13\"", "confluent-kafka (>=2.6,!=2.8.1,<3) ; python_version >= \"3.13\"", "confluent-kafka-stubs ; python_version >= \"3.11\"", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "ruff (==0.11.4)", "semgrep (==1.117.0) ; python_version >= \"3.9\"", "semgrep (==1.99.0) ; python_version < \"3.9\"", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
+nats = ["nats-py (>=2.7.0,<=3.0.0)"]
+optionals = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2,!=2.8.1,<3) ; python_version < \"3.13\"", "confluent-kafka (>=2.6,!=2.8.1,<3) ; python_version >= \"3.13\"", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "watchfiles (>=0.15.0,<1.1.0)"]
+otel = ["opentelemetry-sdk (>=1.24.0,<2.0.0)"]
+prometheus = ["prometheus-client (>=0.20.0,<0.30.0)"]
+rabbit = ["aio-pika (>=9,<10)"]
+redis = ["redis (>=5.0.0,<6.0.0)"]
+test-core = ["coverage[toml] (==7.6.1) ; python_version < \"3.9\"", "coverage[toml] (==7.8.0) ; python_version >= \"3.9\"", "dirty-equals (==0.9.0)", "pytest (==8.3.5)", "pytest-asyncio (==0.24.0) ; python_version < \"3.9\"", "pytest-asyncio (==0.26.0) ; python_version >= \"3.9\"", "typing-extensions (>=4.8.0,<4.12.1) ; python_version < \"3.9\""]
+testing = ["coverage[toml] (==7.6.1) ; python_version < \"3.9\"", "coverage[toml] (==7.8.0) ; python_version >= \"3.9\"", "dirty-equals (==0.9.0)", "email-validator (==2.2.0)", "fastapi (==0.115.12)", "httpx (==0.28.1)", "pydantic-settings (>=2.0.0,<3.0.0)", "pytest (==8.3.5)", "pytest-asyncio (==0.24.0) ; python_version < \"3.9\"", "pytest-asyncio (==0.26.0) ; python_version >= \"3.9\"", "pyyaml (==6.0.2)", "typing-extensions (>=4.8.0,<4.12.1) ; python_version < \"3.9\""]
+types = ["aio-pika (>=9,<10)", "aiokafka (>=0.9,<0.13)", "confluent-kafka (>=2,!=2.8.1,<3) ; python_version < \"3.13\"", "confluent-kafka (>=2.6,!=2.8.1,<3) ; python_version >= \"3.13\"", "confluent-kafka-stubs ; python_version >= \"3.11\"", "mypy (==1.15.0)", "nats-py (>=2.7.0,<=3.0.0)", "opentelemetry-sdk (>=1.24.0,<2.0.0)", "prometheus-client (>=0.20.0,<0.30.0)", "redis (>=5.0.0,<6.0.0)", "typer (>=0.9,!=0.12,<=0.15.2)", "types-aiofiles", "types-deprecated", "types-docutils", "types-pygments", "types-pyyaml", "types-redis", "types-setuptools", "types-ujson", "watchfiles (>=0.15.0,<1.1.0)"]
 
 [[package]]
 name = "flower"
@@ -999,6 +1051,31 @@ lingua = ["lingua"]
 testing = ["pytest"]
 
 [[package]]
+name = "markdown-it-py"
+version = "3.0.0"
+description = "Python port of markdown-it. Markdown parsing, done right!"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
+    {file = "markdown_it_py-3.0.0-py3-none-any.whl", hash = "sha256:355216845c60bd96232cd8d8c40e8f9765cc86f46880e43a8fd22dc1a1a8cab1"},
+]
+
+[package.dependencies]
+mdurl = ">=0.1,<1.0"
+
+[package.extras]
+benchmarking = ["psutil", "pytest", "pytest-benchmark"]
+code-style = ["pre-commit (>=3.0,<4.0)"]
+compare = ["commonmark (>=0.9,<1.0)", "markdown (>=3.4,<4.0)", "mistletoe (>=1.0,<2.0)", "mistune (>=2.0,<3.0)", "panflute (>=2.3,<3.0)"]
+linkify = ["linkify-it-py (>=1,<3)"]
+plugins = ["mdit-py-plugins"]
+profiling = ["gprof2dot"]
+rtd = ["jupyter_sphinx", "mdit-py-plugins", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1067,6 +1144,18 @@ files = [
     {file = "MarkupSafe-3.0.2-cp39-cp39-win32.whl", hash = "sha256:8c4e8c3ce11e1f92f6536ff07154f9d49677ebaaafc32db9db4620bc11ed480f"},
     {file = "MarkupSafe-3.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:6e296a513ca3d94054c2c881cc913116e90fd030ad1c656b3869762b754f5f8a"},
     {file = "markupsafe-3.0.2.tar.gz", hash = "sha256:ee55d3edf80167e48ea11a923c7386f4669df67d7994554387f84e7d8b0a2bf0"},
+]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+description = "Markdown URL utilities"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 
 [[package]]
@@ -1347,6 +1436,21 @@ toml = ["tomli (>=2.0.1)"]
 yaml = ["pyyaml (>=6.0.1)"]
 
 [[package]]
+name = "pygments"
+version = "2.19.1"
+description = "Pygments is a syntax highlighting package written in Python."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "pygments-2.19.1-py3-none-any.whl", hash = "sha256:9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c"},
+    {file = "pygments-2.19.1.tar.gz", hash = "sha256:61c16d2a8576dc0649d9f39e089b5f02bcd27fba10d8fb4dcc28173f7a45151f"},
+]
+
+[package.extras]
+windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
 name = "pyjwt"
 version = "2.10.1"
 description = "JSON Web Token implementation in Python"
@@ -1498,6 +1602,25 @@ hiredis = ["hiredis (>=3.0.0)"]
 ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"]
 
 [[package]]
+name = "rich"
+version = "14.0.0"
+description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+optional = false
+python-versions = ">=3.8.0"
+groups = ["main"]
+files = [
+    {file = "rich-14.0.0-py3-none-any.whl", hash = "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0"},
+    {file = "rich-14.0.0.tar.gz", hash = "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725"},
+]
+
+[package.dependencies]
+markdown-it-py = ">=2.2.0"
+pygments = ">=2.13.0,<3.0.0"
+
+[package.extras]
+jupyter = ["ipywidgets (>=7.5.1,<9)"]
+
+[[package]]
 name = "s3transfer"
 version = "0.11.4"
 description = "An Amazon S3 Transfer Manager"
@@ -1535,6 +1658,18 @@ doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-
 enabler = ["pytest-enabler (>=2.2)"]
 test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21) ; python_version >= \"3.9\" and sys_platform != \"cygwin\"", "jaraco.envs (>=2.2)", "jaraco.path (>=3.7.2)", "jaraco.test (>=5.5)", "packaging (>=24.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf ; sys_platform != \"cygwin\"", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
 type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.develop (>=7.21) ; sys_platform != \"cygwin\"", "mypy (==1.14.*)", "pytest-mypy"]
+
+[[package]]
+name = "shellingham"
+version = "1.5.4"
+description = "Tool to Detect Surrounding Shell"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
+    {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
+]
 
 [[package]]
 name = "six"
@@ -1694,6 +1829,24 @@ files = [
     {file = "tornado-6.4.2-cp38-abi3-win_amd64.whl", hash = "sha256:908b71bf3ff37d81073356a5fadcc660eb10c1476ee6e2725588626ce7e5ca38"},
     {file = "tornado-6.4.2.tar.gz", hash = "sha256:92bad5b4746e9879fd7bf1eb21dce4e3fc5128d71601f80005afa39237ad620b"},
 ]
+
+[[package]]
+name = "typer"
+version = "0.15.2"
+description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "typer-0.15.2-py3-none-any.whl", hash = "sha256:46a499c6107d645a9c13f7ee46c5d5096cae6f5fc57dd11eccbbb9ae3e44ddfc"},
+    {file = "typer-0.15.2.tar.gz", hash = "sha256:ab2fab47533a813c49fe1f16b1a370fd5819099c00b119e0633df65f22144ba5"},
+]
+
+[package.dependencies]
+click = ">=8.0.0"
+rich = ">=10.11.0"
+shellingham = ">=1.3.0"
+typing-extensions = ">=3.7.4.3"
 
 [[package]]
 name = "typing-extensions"
@@ -2095,4 +2248,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "9d596af6806d2b3b7500fb37432100024800d725252c5f21277e7d83f45059a0"
+content-hash = "734d5fd68834bff81bf2b326d61b691e162978bb5d4bb42e54b2bda763a6b5d9"
