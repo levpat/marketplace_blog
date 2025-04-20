@@ -17,7 +17,7 @@ async def get(
 ) -> GetPostSchema:
     return await post_service.get(page=page,
                                   page_size=page_size,
-                                  category=categories,
+                                  categories=categories,
                                   search=search)
 
 

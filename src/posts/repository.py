@@ -58,6 +58,9 @@ class PostRepository:
                   search: str | None
                   ) -> Sequence[Post]:
 
+        if isinstance(categories, list) and len(categories) == 1:
+            categories = categories[0].split(',')
+
         existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories)))
         existing_categories = existing_categories.all()
 
@@ -69,20 +72,18 @@ class PostRepository:
 
         query = select(Post)
 
+        if search:
+            columns = func.coalesce(Post.title, '').concat(func.coalesce(Post.text, ''))
+            columns = columns.self_group()
+            query = query.where(
+                columns.bool_op('%')(search),
+            ).order_by(
+                func.similarity(columns, search).desc(),
+            )
+
         if existing_categories:
             category_ids = [category.id for category in existing_categories]
             query = query.join(PostCategories).where(PostCategories.category_id.in_(category_ids))
-
-        if search:
-            columns = (
-                func.coalesce(Post.title, '').concat(func.coalesce(Post.text, ''))
-                .self_group()
-            )
-            query = (
-                query.select_from(Post)
-                .where(columns.bool_op('%')(search))
-                .order_by(func.similarity(columns, search).desc())
-            )
 
         query = query.limit(page_size).offset((page - 1) * page_size)
 

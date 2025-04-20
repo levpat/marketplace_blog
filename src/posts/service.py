@@ -47,6 +47,7 @@ class PostService:
                   search: str | None) -> GetPostSchema:
         posts = await self.repository.get(page=page,
                                           page_size=page_size,
+                                          categories=categories,
                                           search=search)
         return GetPostSchema(
             posts=posts
