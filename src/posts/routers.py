@@ -33,7 +33,7 @@ async def create(
 async def update(
         post_service: Annotated[PostService, Depends(get_post_service)],
         post_id: str,
-        update_post: CreatePostSchema
+        update_post: CreatePostSchema = Depends()
 ) -> ResponseModelPostSchema:
     return await post_service.update(
         post_id=post_id,

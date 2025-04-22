@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from src.config import host, port
+from src.settings.config import host, port
 from src.auth.service import JWTMiddleware
 from src.categories.routers import category_router
 from src.users.routers import user_router

@@ -8,7 +8,7 @@ from starlette.requests import Request
 
 from src.auth.schemas import GetAuthDataResponseModel
 from src.users.repository import UserRepository, get_user_repository
-from src.config import access_token_expire_minutes, secret_key, alg, bcrypt_context
+from src.settings.config import access_token_expire_minutes, secret_key, alg, bcrypt_context
 
 
 class AuthService:

@@ -14,9 +14,9 @@ class CategoryRepository:
         self.session = session
 
     async def get(self) -> GetCategoriesSchema:
-        categories = await self.session.scalars(select(Category).order_by(Category.id)).all()
+        categories = await self.session.scalars(select(Category).order_by(Category.id))
         return GetCategoriesSchema(
-            categories=categories
+            categories=categories.all()
         )
 
     async def create(self,

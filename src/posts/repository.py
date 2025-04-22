@@ -105,20 +105,24 @@ class PostRepository:
                 detail="Post not found"
             )
 
-        existing_categories = await self.session.scalars(select(Category)
-                                                         .where(Category.title.in_(categories)))
+        if isinstance(categories, list) and len(categories) == 1:
+            categories = categories[0].split(',')
 
+        existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories)))
         existing_categories = existing_categories.all()
 
         if len(existing_categories) != len(categories):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Some categories not found"
             )
 
         post_for_update.title = title
         post_for_update.text = text
         post_for_update.image_url = image_url
+
+        self.session.add(post_for_update)
+        await self.session.flush()
 
         await self.session.execute(
             delete(PostCategories)
@@ -133,7 +137,6 @@ class PostRepository:
             ) for category_id in category_ids
         ]
 
-        self.session.add(post_for_update)
         self.session.add_all(post_categories_links)
         await self.session.commit()
 

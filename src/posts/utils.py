@@ -1,7 +1,7 @@
 from typing import BinaryIO
 from minio import Minio
 
-from src.config import minio_url, minio_bucket, minio_access, minio_secret
+from src.settings.config import minio_url, minio_bucket, minio_access, minio_secret
 
 
 class MinioHandler:

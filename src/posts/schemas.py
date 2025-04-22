@@ -28,14 +28,14 @@ class PostSchema(BasePostSchema):
 
 
 class GetPostSchema(BaseModel):
-    posts: Sequence[PostSchema]
+    data: Sequence[PostSchema]
 
 
 class DeletedPostSchema(PostSchema):
     deleted_at: datetime
 
 
-class ResponseModelPostSchema(BaseModel):
+class ResponseModelPostSchema(GetPostSchema):
     status_code: int
     detail: str
     data: list[PostSchema]

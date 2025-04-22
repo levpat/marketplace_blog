@@ -1,15 +1,14 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from faststream.redis import RedisBroker
 from pydantic import EmailStr
-from contextlib import asynccontextmanager
 
 from src.users.models import Users
 from src.users.repository import UserRepository, get_user_repository
 from src.users.schemas import CreateUserSchema
-from src.config import bcrypt_context, redis_url, pass_yandex, mail_yandex, smtp_ya
+from src.settings.config import bcrypt_context, redis_url, pass_yandex, mail_yandex, smtp_ya
 
 broker = RedisBroker(redis_url)
 

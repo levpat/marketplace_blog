@@ -7,7 +7,7 @@ from fastapi import UploadFile, HTTPException, status, Depends
 from src.posts.repository import PostRepository, get_post_repository
 from src.posts.schemas import CreatePostSchema, ResponseModelPostSchema, GetPostSchema
 from src.posts.utils import MinioHandler, get_minio_handler
-from src.config import valid_exceptions, minio_url, minio_bucket
+from src.settings.config import valid_exceptions, minio_url, minio_bucket
 
 
 class PostService:
@@ -50,7 +50,7 @@ class PostService:
                                           categories=categories,
                                           search=search)
         return GetPostSchema(
-            posts=posts
+            data=posts
         )
 
     async def create(self,
