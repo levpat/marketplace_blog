@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 
 dotenv.load_dotenv()
 db_url = os.getenv('DB_URL')
+test_db_url = os.getenv('TEST_DB_URL')
 host = os.getenv('HOST')
 port = int(os.getenv('PORT'))
 secret_key = os.getenv('SECRET_KEY')
