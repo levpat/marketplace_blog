@@ -10,7 +10,7 @@ user_router = APIRouter(prefix='/users', tags=['users'])
 @user_router.post("/", response_model=ResponseModelUserSchema)
 async def create(
         user_service: Annotated[UserService, Depends(get_user_service)],
-        create_user: Annotated[CreateUserSchema, Depends()]
+        create_user: CreateUserSchema
 ) -> ResponseModelUserSchema:
     user = await user_service.create(create_user=create_user)
 
