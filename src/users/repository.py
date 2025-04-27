@@ -1,7 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends
-from sqlalchemy import select
+from fastapi import Depends, HTTPException, status
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.db_depends import get_session
@@ -19,14 +19,35 @@ class UserRepository:
                      username: str,
                      email: str,
                      password: str) -> list[Users]:
-        user = Users(first_name=first_name,
-                     last_name=last_name,
-                     username=username,
-                     email=email,
-                     hashed_password=password)
-        self.session.add(user)
-        await self.session.commit()
-        return [user]
+        current_user = await self.session.scalar(
+            select(Users).where(or_(
+                Users.email == email,
+                Users.username == username
+            )
+            )
+        )
+
+        if current_user is None:
+            new_user = Users(first_name=first_name,
+                             last_name=last_name,
+                             username=username,
+                             email=email,
+                             hashed_password=password)
+            self.session.add(new_user)
+            await self.session.commit()
+            return [new_user]
+
+        if current_user.email == email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This email has been registered"
+            )
+
+        if current_user.username == username:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This username is taken"
+            )
 
     async def get_user_for_authenticate(self,
                                         username: str) -> Users:

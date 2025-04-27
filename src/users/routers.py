@@ -7,7 +7,11 @@ from src.users.service import UserService, get_user_service, broker
 user_router = APIRouter(prefix='/users', tags=['users'])
 
 
-@user_router.post("/", response_model=ResponseModelUserSchema)
+@user_router.post(
+    "/",
+    response_model=ResponseModelUserSchema,
+    status_code=status.HTTP_201_CREATED
+)
 async def create(
         user_service: Annotated[UserService, Depends(get_user_service)],
         create_user: CreateUserSchema

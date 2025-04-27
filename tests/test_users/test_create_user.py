@@ -1,19 +1,10 @@
 import pytest
-from faststream.redis import TestRedisBroker
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, patch
-from fastapi import status
-
-from src.main import app
-from src.users.repository import UserRepository
-from src.settings import config
-from src.users.service import UserService, handle_email_task
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_create_user(
         client: AsyncClient,
-        test_broker: TestRedisBroker,
 ):
     test_data = {
         "first_name": "John",
@@ -28,5 +19,63 @@ async def test_create_user(
         json=test_data,
     )
 
-    print("Validation errors:", response.json())
-    assert response.status_code == 200
+    assert response.status_code == 201
+
+    response_data = response.json()
+    assert response_data["status_code"] == 201
+    assert response_data["detail"] == "User create"
+
+    data = response_data["data"][0]
+    assert data["first_name"] == "John"
+    assert data["last_name"] == "Doe"
+    assert data["username"] == "johndoe"
+    assert data["email"] == "test@example.com"
+    assert data["role"] == "user"
+    assert "id" in data
+    assert "password" not in data
+
+
+@pytest.mark.asyncio
+async def test_create_user_with_registered_email(
+        client: AsyncClient
+):
+    test_data = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "username": "doejohn",
+        "email": "test@example.com",
+        "password": "testpaassword"
+    }
+
+    response = await client.post(
+        "/users/",
+        json=test_data,
+    )
+
+    assert response.status_code == 400
+
+    response_data = response.json()
+    assert response_data["detail"] == "This email has been registered"
+
+
+@pytest.mark.asyncio
+async def test_create_user_with_registered_username(
+        client: AsyncClient
+):
+    test_data = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "username": "johndoe",
+        "email": "example@test.com",
+        "password": "testpaassword"
+    }
+
+    response = await client.post(
+        "/users/",
+        json=test_data,
+    )
+
+    assert response.status_code == 400
+
+    response_data = response.json()
+    assert response_data["detail"] == "This username is taken"

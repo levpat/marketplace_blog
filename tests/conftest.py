@@ -6,7 +6,6 @@ from faststream.redis import TestRedisBroker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from src.main import app
 from src.settings.config import test_db_url
@@ -30,21 +29,18 @@ class TestBase(DeclarativeBase):
     pass
 
 
-@pytest_asyncio.fixture(scope="module", autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="module", autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database():
     async with test_engine.begin() as conn:
-        await conn.run_sync(TestBase.metadata.drop_all)
         await conn.run_sync(TestBase.metadata.create_all)
-    yield
-
-    async with test_engine.begin() as conn:
+        yield
         await conn.run_sync(TestBase.metadata.drop_all)
 
 
@@ -85,17 +81,7 @@ async def test_broker():
         yield test_broker
 
 
-# async def mock_broker():
-#    with patch("src.users.service.broker") as mock_broker:
-#        mock_broker.connect = AsyncMock()
-#        mock_broker.is_connected = True
-#        mock_broker.publish = AsyncMock()
-#        mock_broker.subscriber = MagicMock()
-#        mock_broker.subscriber.return_value = lambda fn: fn
-#        yield mock_broker
-
-
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture(scope="session")
 async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
     async with test_async_session() as session:
         yield session
