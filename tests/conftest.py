@@ -126,5 +126,4 @@ async def get_test_user(
     await get_test_session.commit()
     yield test_user
     await get_test_session.close()
-
     await get_test_session.rollback()
