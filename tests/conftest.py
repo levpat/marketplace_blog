@@ -3,18 +3,22 @@ import pytest_asyncio
 from typing import AsyncGenerator
 
 from faststream.redis import TestRedisBroker
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 from httpx import AsyncClient, ASGITransport
 
+from src.backend.db import Base
+from src.auth.service import AuthService
 from src.main import app
-from src.settings.config import test_db_url
+from src.settings.config import test_db_url, bcrypt_context
+from src.users.models import Users
 from src.users.repository import UserRepository
 from src.users.service import UserService, get_user_service
 
 test_engine: AsyncEngine = create_async_engine(
     test_db_url,
-    echo=True
+    echo=True,
+    poolclass=NullPool
 )
 
 test_async_session = async_sessionmaker(
@@ -25,10 +29,6 @@ test_async_session = async_sessionmaker(
 )
 
 
-class TestBase(DeclarativeBase):
-    pass
-
-
 @pytest_asyncio.fixture(scope="session", autouse=True)
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -36,12 +36,15 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def setup_database():
     async with test_engine.begin() as conn:
-        await conn.run_sync(TestBase.metadata.create_all)
-        yield
-        await conn.run_sync(TestBase.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
 
 
 @pytest_asyncio.fixture
@@ -81,17 +84,47 @@ async def test_broker():
         yield test_broker
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
     async with test_async_session() as session:
         yield session
 
 
 @pytest_asyncio.fixture
-async def test_user_repository(get_test_session: AsyncSession):
+async def test_user_repository(
+        get_test_session: AsyncSession
+):
     return UserRepository(get_test_session)
 
 
 @pytest_asyncio.fixture
-async def test_user_service(get_test_session: AsyncSession):
+async def test_user_service(
+        get_test_session: AsyncSession
+):
     return UserService(UserRepository(get_test_session))
+
+
+@pytest_asyncio.fixture
+async def test_authenticate_service(
+        get_test_session: AsyncSession
+):
+    return AuthService(UserRepository(get_test_session))
+
+
+@pytest_asyncio.fixture
+async def get_test_user(
+        get_test_session
+):
+    test_user = Users(
+        first_name="John",
+        last_name="Doe",
+        username="johndoe",
+        email="test@example.com",
+        hashed_password=bcrypt_context.hash("testpassword")
+    )
+    get_test_session.add(test_user)
+    await get_test_session.commit()
+    yield test_user
+    await get_test_session.close()
+
+    await get_test_session.rollback()

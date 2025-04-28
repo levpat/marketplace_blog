@@ -37,7 +37,8 @@ async def test_create_user(
 
 @pytest.mark.asyncio
 async def test_create_user_with_registered_email(
-        client: AsyncClient
+        client: AsyncClient,
+        get_test_user
 ):
     test_data = {
         "first_name": "John",
@@ -60,7 +61,8 @@ async def test_create_user_with_registered_email(
 
 @pytest.mark.asyncio
 async def test_create_user_with_registered_username(
-        client: AsyncClient
+        client: AsyncClient,
+        get_test_user
 ):
     test_data = {
         "first_name": "John",
