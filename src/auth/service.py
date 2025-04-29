@@ -47,10 +47,16 @@ class AuthService:
                                 response: Response
                                 ) -> GetAuthDataResponseModel:
         user = await self.repository.get_user_for_authenticate(username)
-        if not user or not bcrypt_context.verify(password, user.hashed_password):
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        if not bcrypt_context.verify(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
+                detail="Wrong password",
                 headers={"WWW-Authenticate": "Bearer"}
             )
         data = {
