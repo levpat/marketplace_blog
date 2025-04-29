@@ -2,7 +2,7 @@ import jwt
 from typing import Annotated
 from datetime import timedelta, datetime, timezone
 from fastapi import status, HTTPException, Depends
-from fastapi.responses import Response
+from fastapi import Response
 from starlette.types import ASGIApp, Scope, Send, Receive
 from starlette.requests import Request
 

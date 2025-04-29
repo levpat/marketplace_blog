@@ -15,7 +15,7 @@ async def test_create_user(
     }
 
     response = await client.post(
-        "/users/",
+        url="/users/",
         json=test_data,
     )
 

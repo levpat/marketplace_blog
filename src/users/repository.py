@@ -52,7 +52,7 @@ class UserRepository:
     async def get_user_for_authenticate(self,
                                         username: str) -> Users:
         user = await self.session.scalar(select(Users) \
-                                         .where(username == Users.username))
+                                         .where(Users.username == username))
         return user
 
 

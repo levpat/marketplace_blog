@@ -5,10 +5,14 @@ from typing import AsyncGenerator
 from faststream.redis import TestRedisBroker
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
+from fastapi.testclient import TestClient
+from fastapi import Response
 from httpx import AsyncClient, ASGITransport
 
 from src.backend.db import Base
-from src.auth.service import AuthService
+from src.auth.service import AuthService, get_auth_service
+from src.categories.repository import CategoryRepository
+from src.categories.service import CategoryService
 from src.main import app
 from src.settings.config import test_db_url, bcrypt_context
 from src.users.models import Users
@@ -69,10 +73,46 @@ async def override_user_dependencies(test_user_service: UserService):
         del app.dependency_overrides[get_user_service]
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def override_auth_dependencies(test_authenticate_service: AuthService):
+    original_get_auth_service = app.dependency_overrides.get(get_auth_service)
+
+    def _get_test_auth_service():
+        return test_authenticate_service
+
+    app.dependency_overrides[get_auth_service] = _get_test_auth_service
+    yield
+
+    if original_get_auth_service:
+        app.dependency_overrides[get_auth_service] = original_get_auth_service
+    else:
+        del app.dependency_overrides[get_auth_service]
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def override_response_dependencies():
+    from fastapi import Response
+    original_dependency = app.dependency_overrides.get(Response)
+
+    def get_response():
+        return Response
+
+    app.dependency_overrides[Response] = get_response
+    yield
+    app.dependency_overrides.pop(Response, None)
+    if original_dependency:
+        app.dependency_overrides[Response] = original_dependency
+
+
 @pytest_asyncio.fixture(scope="function")
 async def client() -> AsyncClient:
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            follow_redirects=True,
+            cookies={}
+    ) as client:
         yield client
 
 
@@ -112,18 +152,23 @@ async def test_authenticate_service(
 
 
 @pytest_asyncio.fixture
-async def get_test_user(
-        get_test_session
+async def test_category_service(
+        get_test_session: AsyncSession,
 ):
-    test_user = Users(
-        first_name="John",
-        last_name="Doe",
-        username="johndoe",
-        email="test@example.com",
-        hashed_password=bcrypt_context.hash("testpassword")
-    )
-    get_test_session.add(test_user)
-    await get_test_session.commit()
-    yield test_user
-    await get_test_session.close()
-    await get_test_session.rollback()
+    return CategoryService(CategoryRepository(get_test_session))
+
+
+@pytest_asyncio.fixture
+async def get_test_user(get_test_session):
+    async with get_test_session.begin():
+        test_user = Users(
+            username="johndoe",
+            hashed_password=bcrypt_context.hash("testpassword"),
+            email="test@example.com",
+            first_name="John",
+            last_name="Doe"
+        )
+        get_test_session.add(test_user)
+        await get_test_session.flush()
+        await get_test_session.refresh(test_user)
+        yield test_user

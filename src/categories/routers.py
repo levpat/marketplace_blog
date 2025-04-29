@@ -18,6 +18,6 @@ async def get(
 @category_router.post('/create', response_model=CategorySchema, status_code=status.HTTP_201_CREATED)
 async def create(
         category_service: Annotated[CategoryService, Depends(get_category_service)],
-        create_category: CreateCategorySchema = Depends()
+        create_category: CreateCategorySchema
 ) -> CategorySchema:
     return await category_service.create(create_category)
