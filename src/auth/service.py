@@ -68,12 +68,11 @@ class AuthService:
         }
         token = self.create_access_token(data)
         self.set_token(response, token)
-        for_answer = jwt.decode(token, secret_key, algorithms=alg)
 
         return GetAuthDataResponseModel(
             status_code=status.HTTP_200_OK,
             detail=f"Wellcome {user.first_name}!",
-            token=for_answer
+            token=token
         )
 
 

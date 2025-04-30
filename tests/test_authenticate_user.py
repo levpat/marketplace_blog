@@ -26,13 +26,6 @@ async def test_successful_login(
     assert response_data["detail"] == "Wellcome John!"
     assert response_data["token"] is not None
 
-    token = response_data["token"]
-    assert token["clientID"] is not None
-    assert token["name"] == "John"
-    assert token["username"] == "johndoe"
-    assert token["email"] == "test@example.com"
-    assert token["role"] == "user"
-
 
 @pytest.mark.asyncio
 async def test_login_with_wrong_username(

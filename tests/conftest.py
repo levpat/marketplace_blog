@@ -5,14 +5,12 @@ from typing import AsyncGenerator
 from faststream.redis import TestRedisBroker
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
-from fastapi.testclient import TestClient
-from fastapi import Response
 from httpx import AsyncClient, ASGITransport
 
 from src.backend.db import Base
 from src.auth.service import AuthService, get_auth_service
 from src.categories.repository import CategoryRepository
-from src.categories.service import CategoryService
+from src.categories.service import CategoryService, get_category_service
 from src.main import app
 from src.settings.config import test_db_url, bcrypt_context
 from src.users.models import Users
@@ -87,6 +85,22 @@ async def override_auth_dependencies(test_authenticate_service: AuthService):
         app.dependency_overrides[get_auth_service] = original_get_auth_service
     else:
         del app.dependency_overrides[get_auth_service]
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def override_category_dependencies(test_category_service: CategoryService):
+    original_get_category_service = app.dependency_overrides.get(get_category_service)
+
+    def _get_test_category_service():
+        return test_category_service
+
+    app.dependency_overrides[get_category_service] = _get_test_category_service
+    yield
+
+    if original_get_category_service:
+        app.dependency_overrides[get_category_service] = original_get_category_service
+    else:
+        del app.dependency_overrides[get_category_service]
 
 
 @pytest_asyncio.fixture(autouse=True)
