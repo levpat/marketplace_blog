@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,12 +21,19 @@ class CategoryRepository:
 
     async def create(self,
                      title: str) -> CategorySchema:
-        category = Category(title=title)
-        self.session.add(category)
+        category = await self.session.scalar(select(Category)
+                                             .where(Category.title == title))
+        if category is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This category is already exist"
+            )
+        new_category = Category(title=title)
+        self.session.add(new_category)
         await self.session.commit()
         return CategorySchema(
-            id=category.id,
-            title=category.title
+            id=new_category.id,
+            title=new_category.title
         )
 
 

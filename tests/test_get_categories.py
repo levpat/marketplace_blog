@@ -7,9 +7,9 @@ from src.users.models import Users
 
 
 @pytest.mark.asyncio
-async def test_create_category(
+async def test_get_categories(
         client: AsyncClient,
-        get_test_user
+        get_test_user,
 ):
     login_data = {
         "username": "johndoe",
@@ -27,29 +27,22 @@ async def test_create_category(
         "value": token,
     }
 
-    test_data = {
-        "title": "Test category",
-    }
-
-    category_response = await client.post(
-        url="/categories/create",
-        json=test_data,
+    get_categories_response = await client.get(
+        url="/categories/",
         cookies=cookie
     )
 
-    assert category_response.status_code == 201
-
-    response_data = category_response.json()
-    assert response_data["id"] == 1
-    assert response_data["title"] == "Test category"
+    assert get_categories_response.status_code == 200
+    assert len(get_categories_response.json()["categories"]) == 0
 
 
 @pytest.mark.asyncio
-async def test_create_same_category(
+async def test_get_some_categories(
         client: AsyncClient,
         get_test_user: Users,
-        get_test_session: AsyncSession,
+        get_test_session: AsyncSession
 ):
+
     async with get_test_session.begin_nested():
         test_category = Category(
             title="Test category",
@@ -74,17 +67,9 @@ async def test_create_same_category(
         "value": token,
     }
 
-    test_data = {
-        "title": "Test category",
-    }
-
-    category_response = await client.post(
-        url="/categories/create",
-        json=test_data,
+    categories_response = await client.get(
+        url="/categories/",
         cookies=cookie
     )
-
-    assert category_response.status_code == 400
-
-    response_data = category_response.json()
-    assert response_data["detail"] == "This category is already exist"
+    assert categories_response.status_code == 200
+    assert len(categories_response.json()["categories"]) == 1

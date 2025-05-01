@@ -46,6 +46,7 @@ async def setup_database():
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    await asyncio.sleep(0.1)
     await test_engine.dispose()
 
 
@@ -141,7 +142,10 @@ async def test_broker():
 @pytest_asyncio.fixture(scope="function")
 async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
     async with test_async_session() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 @pytest_asyncio.fixture
