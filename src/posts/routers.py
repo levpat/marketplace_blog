@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status, UploadFile, Form, File
 
 from src.posts.schemas import GetPostSchema, ResponseModelPostSchema, CreatePostSchema
 from src.posts.service import PostService, get_post_service
@@ -21,11 +21,24 @@ async def get(
                                   search=search)
 
 
-@post_router.post("/", response_model=ResponseModelPostSchema)
+@post_router.post(
+    "/",
+    response_model=ResponseModelPostSchema,
+    status_code=status.HTTP_201_CREATED
+)
 async def create(
         post_service: Annotated[PostService, Depends(get_post_service)],
-        create_post: CreatePostSchema = Depends()
+        image: UploadFile = File(...),
+        title: str = Form(...),
+        text: str = Form(...),
+        categories: list[str] = Form(...)
 ) -> ResponseModelPostSchema:
+    create_post = CreatePostSchema(
+        title=title,
+        text=text,
+        categories=categories,
+        image=image
+    )
     return await post_service.create(create_post=create_post)
 
 

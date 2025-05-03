@@ -1,4 +1,6 @@
 import asyncio
+from unittest.mock import AsyncMock
+
 import pytest_asyncio
 from typing import AsyncGenerator
 
@@ -12,6 +14,9 @@ from src.auth.service import AuthService, get_auth_service
 from src.categories.repository import CategoryRepository
 from src.categories.service import CategoryService, get_category_service
 from src.main import app
+from src.posts.repository import PostRepository
+from src.posts.service import PostService, get_post_service
+from src.posts.utils import MinioHandler
 from src.settings.config import test_db_url, bcrypt_context
 from src.users.models import Users
 from src.users.repository import UserRepository
@@ -105,18 +110,19 @@ async def override_category_dependencies(test_category_service: CategoryService)
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def override_response_dependencies():
-    from fastapi import Response
-    original_dependency = app.dependency_overrides.get(Response)
+async def override_post_dependencies(test_post_service: PostService):
+    original_get_post_service = app.dependency_overrides.get(get_post_service)
 
-    def get_response():
-        return Response
+    def _get_test_post_service():
+        return test_post_service
 
-    app.dependency_overrides[Response] = get_response
+    app.dependency_overrides[get_post_service] = _get_test_post_service
     yield
-    app.dependency_overrides.pop(Response, None)
-    if original_dependency:
-        app.dependency_overrides[Response] = original_dependency
+
+    if original_get_post_service:
+        app.dependency_overrides[get_post_service] = original_get_post_service
+    else:
+        del app.dependency_overrides[get_post_service]
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -129,6 +135,18 @@ async def client() -> AsyncClient:
             cookies={}
     ) as client:
         yield client
+
+
+@pytest_asyncio.fixture
+async def mock_minio_handler(monkeypatch):
+    mock = AsyncMock(spec=MinioHandler)
+    mock.upload_file = AsyncMock(return_value=None)
+    mock.get_upload_image_url = AsyncMock(return_value="http://minio-test/test.jpg")
+    monkeypatch.setattr(
+        "src.posts.utils.get_minio_handler",
+        AsyncMock(return_value=mock)
+    )
+    return mock
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -174,6 +192,17 @@ async def test_category_service(
         get_test_session: AsyncSession,
 ):
     return CategoryService(CategoryRepository(get_test_session))
+
+
+@pytest_asyncio.fixture
+async def test_post_service(
+        get_test_session: AsyncSession,
+        mock_minio_handler: AsyncMock,
+):
+    return PostService(
+        repository=PostRepository(get_test_session),
+        client=mock_minio_handler
+    )
 
 
 @pytest_asyncio.fixture

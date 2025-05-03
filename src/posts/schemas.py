@@ -2,24 +2,23 @@ import uuid
 from datetime import datetime
 from typing import Sequence
 
-from fastapi import UploadFile, Form
+from fastapi import UploadFile, File
 from pydantic import BaseModel
 
 
 class BasePostSchema(BaseModel):
     title: str
-    image_url: str | None
+    text: str
 
 
 class CreatePostSchema(BasePostSchema):
-    text: str
     categories: list[str]
-    image: UploadFile = Form()
+    image: UploadFile = File()
 
 
 class PostSchema(BasePostSchema):
     id: uuid.UUID = uuid.uuid4()
-    text: str
+    image_url: str
     created_at: datetime
     updated_at: datetime | None = None
 
