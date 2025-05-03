@@ -178,3 +178,67 @@ async def test_create_post_with_same_title(
 
     assert post_response.status_code == 400
     assert post_response.json()["detail"] == "Post with same title is already exist"
+
+
+@pytest.mark.asyncio
+async def test_create_post_with_same_text(
+        client: AsyncClient,
+        get_test_user: Users,
+        get_test_session: AsyncSession,
+        mock_minio_handler,
+):
+    test_file = ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+
+    async with get_test_session.begin_nested():
+        test_category = Category(
+            title="Test category",
+        )
+        get_test_session.add(test_category)
+        await get_test_session.flush()
+        await get_test_session.refresh(test_category)
+
+    async with get_test_session.begin_nested():
+        test_post = Post(
+            title="Test post",
+            text="Test content",
+            image_url="Test_url"
+        )
+        get_test_session.add(test_post)
+        await get_test_session.flush()
+        await get_test_session.refresh(test_post)
+
+    data = {
+        "title": "Another test post",
+        "text": "Test content",
+        "categories": ["Test category"],
+    }
+
+    files = {
+        "image": test_file,
+    }
+
+    login_data = {
+        "username": "johndoe",
+        "password": "testpassword",
+    }
+
+    login_response = await client.post(
+        url="/auth/login",
+        json=login_data
+    )
+
+    token = login_response.json()["token"]
+    cookie = {
+        "key": "access_token",
+        "value": token,
+    }
+
+    post_response = await client.post(
+        url="/posts/",
+        cookies=cookie,
+        data=data,
+        files=files
+    )
+
+    assert post_response.status_code == 400
+    assert post_response.json()["detail"] == "Post with same text is already exist"
