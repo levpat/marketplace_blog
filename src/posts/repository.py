@@ -1,6 +1,6 @@
 from typing import Annotated, Sequence
 from fastapi import HTTPException, status, Depends
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.associations.models import PostCategories
@@ -19,37 +19,57 @@ class PostRepository:
                      text: str,
                      categories: list[str],
                      image_url: str) -> Post:
+        current_post = await self.session.scalar(
+            select(Post)
+            .where(or_(
+                Post.title == title,
+                Post.text == text
+            )))
 
-        if isinstance(categories, list) and len(categories) == 1:
-            categories = categories[0].split(',')
+        if current_post is None:
 
-        existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories)))
-        existing_categories = existing_categories.all()
+            if isinstance(categories, list) and len(categories) == 1:
+                categories = categories[0].split(',')
 
-        if len(existing_categories) != len(categories):
+            existing_categories = await self.session.scalars(select(Category).where(Category.title.in_(categories)))
+            existing_categories = existing_categories.all()
+
+            if len(existing_categories) != len(categories):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Some categories not found"
+                )
+
+            post = Post(title=title,
+                        text=text,
+                        image_url=image_url)
+            self.session.add(post)
+            await self.session.flush()
+
+            category_ids = [category.id for category in existing_categories]
+            post_categories_links = [
+                PostCategories(
+                    post_id=post.id,
+                    category_id=category_id
+                ) for category_id in category_ids
+            ]
+
+            self.session.add_all(post_categories_links)
+            await self.session.commit()
+
+            return post
+
+        if current_post.title == title:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Some categories not found"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Post with same title is already exist"
             )
 
-        post = Post(title=title,
-                    text=text,
-                    image_url=image_url)
-        self.session.add(post)
-        await self.session.flush()
-
-        category_ids = [category.id for category in existing_categories]
-        post_categories_links = [
-            PostCategories(
-                post_id=post.id,
-                category_id=category_id
-            ) for category_id in category_ids
-        ]
-
-        self.session.add_all(post_categories_links)
-        await self.session.commit()
-
-        return post
+        if current_post.text == text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Post with same text is already exist"
+            )
 
     async def get(self,
                   page: int,
