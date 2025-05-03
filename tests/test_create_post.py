@@ -1,8 +1,8 @@
 from io import BytesIO
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
 
 from src.categories.models import Category
 from src.posts.service import PostService
@@ -61,3 +61,12 @@ async def test_create_post_success(
     )
 
     assert post_response.status_code == 201
+    response_data = post_response.json()
+    post_response_data = post_response.json()["data"][0]
+    assert response_data["detail"] == "Post created"
+    assert post_response_data["title"] == "Test post"
+    assert post_response_data["text"] == "Test content"
+    assert post_response_data["id"] is not None
+    assert post_response_data["image_url"] == "http://127.0.0.1:9000/marketplace-blog/test.jpg"
+    assert post_response_data["created_at"] is not None
+    assert post_response_data["updated_at"] is None
