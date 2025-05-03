@@ -42,15 +42,28 @@ async def create(
     return await post_service.create(create_post=create_post)
 
 
-@post_router.put("/", response_model=ResponseModelPostSchema)
+@post_router.put(
+    "/",
+    response_model=ResponseModelPostSchema,
+    status_code=status.HTTP_201_CREATED
+)
 async def update(
         post_service: Annotated[PostService, Depends(get_post_service)],
-        post_id: str,
-        update_post: CreatePostSchema = Depends()
+        post_id: str = Form(...),
+        image: UploadFile = File(...),
+        title: str = Form(...),
+        text: str = Form(...),
+        categories: list[str] = Form(...)
 ) -> ResponseModelPostSchema:
+    updated_post = CreatePostSchema(
+        title=title,
+        text=text,
+        categories=categories,
+        image=image
+    )
     return await post_service.update(
         post_id=post_id,
-        update_post=update_post
+        update_post=updated_post
     )
 
 

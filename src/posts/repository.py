@@ -137,30 +137,43 @@ class PostRepository:
                 detail="Some categories not found"
             )
 
-        post_for_update.title = title
-        post_for_update.text = text
-        post_for_update.image_url = image_url
+        if post_for_update.title == title:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Post with same title is already exist"
+            )
 
-        self.session.add(post_for_update)
-        await self.session.flush()
+        if post_for_update.text == text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Post with same text is already exist"
+            )
 
-        await self.session.execute(
-            delete(PostCategories)
-            .where(post_id == PostCategories.post_id)
-        )
+        else:
+            post_for_update.title = title
+            post_for_update.text = text
+            post_for_update.image_url = image_url
 
-        category_ids = [category.id for category in existing_categories]
-        post_categories_links = [
-            PostCategories(
-                post_id=post_for_update.id,
-                category_id=category_id
-            ) for category_id in category_ids
-        ]
+            self.session.add(post_for_update)
+            await self.session.flush()
 
-        self.session.add_all(post_categories_links)
-        await self.session.commit()
+            await self.session.execute(
+                delete(PostCategories)
+                .where(post_id == PostCategories.post_id)
+            )
 
-        return [post_for_update]
+            category_ids = [category.id for category in existing_categories]
+            post_categories_links = [
+                PostCategories(
+                    post_id=post_for_update.id,
+                    category_id=category_id
+                ) for category_id in category_ids
+            ]
+
+            self.session.add_all(post_categories_links)
+            await self.session.commit()
+
+            return [post_for_update]
 
     async def delete(self, post_id: str) -> list[DeletedPost]:
 
