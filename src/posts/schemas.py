@@ -26,15 +26,27 @@ class PostSchema(BasePostSchema):
         from_attributes = True
 
 
+class DeletedPostSchema(BasePostSchema):
+    id: uuid.UUID = uuid.uuid4()
+    image_url: str
+    created_at: datetime
+    deleted_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class GetPostSchema(BaseModel):
     data: Sequence[PostSchema]
-
-
-class DeletedPostSchema(PostSchema):
-    deleted_at: datetime
 
 
 class ResponseModelPostSchema(GetPostSchema):
     status_code: int
     detail: str
     data: list[PostSchema]
+
+
+class ResponseModelDeletedPostSchema(
+    ResponseModelPostSchema
+):
+    data: list[DeletedPostSchema]

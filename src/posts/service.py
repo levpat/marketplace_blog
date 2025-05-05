@@ -5,7 +5,8 @@ from typing import Annotated
 from fastapi import UploadFile, HTTPException, status, Depends
 
 from src.posts.repository import PostRepository, get_post_repository
-from src.posts.schemas import CreatePostSchema, ResponseModelPostSchema, GetPostSchema
+from src.posts.schemas import CreatePostSchema, ResponseModelPostSchema, GetPostSchema, \
+    ResponseModelDeletedPostSchema
 from src.posts.utils import MinioHandler, get_minio_handler
 from src.settings.config import valid_exceptions, minio_url, minio_bucket
 
@@ -90,7 +91,7 @@ class PostService:
             post_id: str
     ) -> ResponseModelPostSchema:
         post = await self.repository.delete(post_id=post_id)
-        return ResponseModelPostSchema(
+        return ResponseModelDeletedPostSchema(
             status_code=status.HTTP_200_OK,
             detail="Post delete",
             data=post

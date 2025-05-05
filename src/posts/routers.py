@@ -1,7 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status, UploadFile, Form, File
 
-from src.posts.schemas import GetPostSchema, ResponseModelPostSchema, CreatePostSchema
+from src.posts.schemas import GetPostSchema, ResponseModelPostSchema, CreatePostSchema, \
+    ResponseModelDeletedPostSchema
 from src.posts.service import PostService, get_post_service
 
 post_router = APIRouter(prefix='/posts', tags=['posts'])
@@ -67,9 +68,12 @@ async def update(
     )
 
 
-@post_router.delete("/", response_model=ResponseModelPostSchema)
+@post_router.delete(
+    "/",
+    response_model=ResponseModelPostSchema
+)
 async def delete(
         post_service: Annotated[PostService, Depends(get_post_service)],
         post_id: str
-) -> ResponseModelPostSchema:
+) -> ResponseModelDeletedPostSchema:
     return await post_service.delete(post_id=post_id)
