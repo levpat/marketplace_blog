@@ -2,6 +2,7 @@ from typing import Annotated, Sequence
 from fastapi import HTTPException, status, Depends
 from sqlalchemy import select, func, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.associations.models import PostCategories
 from src.backend.db_depends import get_session
@@ -90,25 +91,30 @@ class PostRepository:
                 detail="Some categories not found"
             )
 
-        query = select(Post)
+        category_ids = [category.id for category in existing_categories]
+
+        query = select(Post).distinct(Post.id)
 
         if search:
             columns = func.coalesce(Post.title, '').concat(func.coalesce(Post.text, ''))
             columns = columns.self_group()
             query = query.where(
-                columns.bool_op('%')(search),
+                columns.bool_op('%')(search)
             ).order_by(
-                func.similarity(columns, search).desc(),
+                Post.id,
+                func.similarity(columns, search).desc()
             )
-
-        if existing_categories:
-            category_ids = [category.id for category in existing_categories]
-            query = query.join(PostCategories).where(PostCategories.category_id.in_(category_ids))
+        if category_ids:
+            query = (
+                query
+                .join(Post.category)
+                .where(Category.id.in_(category_ids))
+                .options(selectinload(Post.category))
+            )
 
         query = query.limit(page_size).offset((page - 1) * page_size)
 
         posts = await self.session.scalars(query)
-
         return posts.all()
 
     async def update(self,
