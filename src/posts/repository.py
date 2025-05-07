@@ -93,7 +93,7 @@ class PostRepository:
 
         category_ids = [category.id for category in existing_categories]
 
-        query = select(Post).distinct(Post.id)
+        query = select(Post).distinct(Post.title)
 
         if search:
             columns = func.coalesce(Post.title, '').concat(func.coalesce(Post.text, ''))
@@ -101,7 +101,7 @@ class PostRepository:
             query = query.where(
                 columns.bool_op('%')(search)
             ).order_by(
-                Post.id,
+                Post.title,
                 func.similarity(columns, search).desc()
             )
         if category_ids:
