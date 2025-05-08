@@ -91,67 +91,51 @@ async def test_update_post_without_category(
         get_test_session: AsyncSession,
         mock_minio_handler,
 ):
-    test_file = ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    test_data = {
+        "category": {"title": "Test category"},
+        "post": {
+            "title": "Test post",
+            "text": "Test content",
+            "image_url": "Test_url"
+        },
+        "update_data": {
+            "title": "Updated test post",
+            "text": "Updated test content",
+            "categories": [""]
+        },
+        "file": ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    }
 
     async with get_test_session.begin_nested():
-        test_category = Category(
-            title="Test category",
-        )
-        get_test_session.add(test_category)
+        category = Category(**test_data["category"])
+        post = Post(**test_data["post"])
+        get_test_session.add_all([category, post])
         await get_test_session.flush()
-        await get_test_session.refresh(test_category)
-
-    async with get_test_session.begin_nested():
-        test_post = Post(
-            title="Test post",
-            text="Test content",
-            image_url="Test_url"
-        )
-        get_test_session.add(test_post)
-        await get_test_session.flush()
-        await get_test_session.refresh(test_post)
-
-    async with get_test_session.begin_nested():
-        get_post_id = await get_test_session.scalar(
-            select(Post.id).where(Post.title == "Test post")
-        )
 
     data = {
-        "post_id": str(get_post_id),
-        "title": "Updated test post",
-        "text": "Updated test content",
-        "categories": [""],
-    }
-    files = {
-        "image": test_file,
-    }
-
-    login_data = {
-        "username": "johndoe",
-        "password": "testpassword",
+        "post_id": str(post.id),
+        **test_data["update_data"]
     }
 
     login_response = await client.post(
         url="/auth/login",
-        json=login_data
+        json={"username": "johndoe", "password": "testpassword"}
     )
-
     token = login_response.json()["token"]
-    cookie = {
-        "key": "access_token",
-        "value": token,
-    }
 
-    post_response = await client.post(
+    response = await client.post(
         url="/posts/",
-        cookies=cookie,
+        cookies={"access_token": token},
         data=data,
-        files=files
+        files={"image": test_data["file"]}
     )
 
-    assert post_response.status_code == 404
-    response_data = post_response.json()
+    assert response.status_code == 404
+    response_data = response.json()
+
     assert response_data["detail"] == "Some categories not found"
+
+    assert "data" not in response_data
 
 
 @pytest.mark.asyncio
@@ -161,67 +145,51 @@ async def test_update_post_with_same_title(
         get_test_session: AsyncSession,
         mock_minio_handler
 ):
-    test_file = ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    test_data = {
+        "category": {"title": "Test category"},
+        "post": {
+            "title": "Test post",
+            "text": "Test content",
+            "image_url": "Test_url"
+        },
+        "update_data": {
+            "title": "Test post",
+            "text": "Updated content",
+            "categories": ["Test category"]
+        },
+        "file": ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    }
 
     async with get_test_session.begin_nested():
-        test_category = Category(
-            title="Test category",
-        )
-        get_test_session.add(test_category)
+        category = Category(**test_data["category"])
+        post = Post(**test_data["post"])
+        get_test_session.add_all([category, post])
         await get_test_session.flush()
-        await get_test_session.refresh(test_category)
 
-    async with get_test_session.begin_nested():
-        test_post = Post(
-            title="Test post",
-            text="Test content",
-            image_url="Test_url"
-        )
-        get_test_session.add(test_post)
-        await get_test_session.flush()
-        await get_test_session.refresh(test_post)
-
-    async with get_test_session.begin_nested():
-        get_post_id = await get_test_session.scalar(
-            select(Post.id).where(Post.title == "Test post")
-        )
-
-    data = {
-        "post_id": str(get_post_id),
-        "title": "Test post",
-        "text": "Updated test content",
-        "categories": ["Test category"],
-    }
-
-    files = {
-        "image": test_file,
-    }
-
-    login_data = {
-        "username": "johndoe",
-        "password": "testpassword",
-    }
+        data = {
+            "post_id": str(post.id),
+            **test_data["update_data"]
+        }
 
     login_response = await client.post(
         url="/auth/login",
-        json=login_data
+        json={"username": "johndoe", "password": "testpassword"}
     )
-
     token = login_response.json()["token"]
-    cookie = {
-        "key": "access_token",
-        "value": token,
-    }
 
-    post_response = await client.post(
+    response = await client.post(
         url="/posts/",
-        cookies=cookie,
+        cookies={"access_token": token},
         data=data,
-        files=files
+        files={"image": test_data["file"]}
     )
 
-    assert post_response.status_code == 400
-    assert post_response.json()["detail"] == "Post with same title is already exist"
+    assert response.status_code == 400
+    response_data = response.json()
+
+    assert response_data["detail"] == "Post with same title is already exist"
+
+    assert "data" not in response_data
 
 
 @pytest.mark.asyncio
@@ -231,64 +199,42 @@ async def test_update_post_with_same_text(
         get_test_session: AsyncSession,
         mock_minio_handler,
 ):
-    test_file = ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    test_data = {
+        "category": {"title": "Test category"},
+        "post": {
+            "title": "Test post",
+            "text": "Test content",
+            "image_url": "Test_url"
+        },
+        "update_data": {
+            "title": "Updated title",
+            "text": "Test content",
+            "categories": ["Test category"]
+        },
+        "file": ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
+    }
 
     async with get_test_session.begin_nested():
-        test_category = Category(
-            title="Test category",
-        )
-        get_test_session.add(test_category)
+        category = Category(**test_data["category"])
+        post = Post(**test_data["post"])
+        get_test_session.add_all([category, post])
         await get_test_session.flush()
-        await get_test_session.refresh(test_category)
-
-    async with get_test_session.begin_nested():
-        test_post = Post(
-            title="Test post",
-            text="Test content",
-            image_url="Test_url"
-        )
-        get_test_session.add(test_post)
-        await get_test_session.flush()
-        await get_test_session.refresh(test_post)
-
-    async with get_test_session.begin_nested():
-        get_post_id = await get_test_session.scalar(
-            select(Post.id).where(Post.title == "Test post")
-        )
-
-    data = {
-        "post_id": str(get_post_id),
-        "title": "Updated test post",
-        "text": "Test content",
-        "categories": ["Test category"],
-    }
-
-    files = {
-        "image": test_file,
-    }
-
-    login_data = {
-        "username": "johndoe",
-        "password": "testpassword",
-    }
 
     login_response = await client.post(
-        url="/auth/login",
-        json=login_data
+        "/auth/login",
+        json={"username": "johndoe", "password": "testpassword"}
     )
-
     token = login_response.json()["token"]
-    cookie = {
-        "key": "access_token",
-        "value": token,
-    }
 
-    post_response = await client.post(
-        url="/posts/",
-        cookies=cookie,
-        data=data,
-        files=files
+    response = await client.post(
+        "/posts/",
+        cookies={"access_token": token},
+        data={"post_id": str(post.id), **test_data["update_data"]},
+        files={"image": test_data["file"]}
     )
 
-    assert post_response.status_code == 400
-    assert post_response.json()["detail"] == "Post with same text is already exist"
+    assert response.status_code == 400
+    response_data = response.json()
+
+    assert response_data["detail"] == "Post with same text is already exist"
+    assert "data" not in response_data
