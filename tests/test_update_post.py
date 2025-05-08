@@ -213,7 +213,6 @@ async def test_update_post_with_same_text(
         },
         "file": ("test.jpg", BytesIO(b"fake image data"), "image/jpeg")
     }
-
     async with get_test_session.begin_nested():
         category = Category(**test_data["category"])
         post = Post(**test_data["post"])
