@@ -254,3 +254,56 @@ async def test_get_posts_with_search(
         assert post["image_url"] == expected["image_url"]
         assert post["created_at"] is not None
         assert post["updated_at"] is None
+
+@pytest.mark.asyncio
+async def test_get_posts_without_category(
+client: AsyncClient,
+        get_test_user: Users,
+        get_test_session: AsyncSession
+):
+    login_response = await client.post(
+        url="/auth/login",
+        json={"username": "johndoe", "password": "testpassword"}
+    )
+
+    token = login_response.json()["token"]
+
+    post_response = await client.get(
+        url="/posts/?page=1&page_size=10",
+        cookies={"access_token": token}
+    )
+
+    assert post_response.status_code == 400
+    assert post_response.json()["detail"] == "Need to add categories"
+
+@pytest.mark.asyncio
+async def test_get_posts_with_wrong_categories(
+client: AsyncClient,
+        get_test_user: Users,
+        get_test_session: AsyncSession
+):
+    categories = [
+        {"title": "Test category"},
+        {"title": "Category"}
+    ]
+
+    async with get_test_session.begin_nested():
+        for category in categories:
+            test_category = Category(**category)
+            get_test_session.add(test_category)
+        await get_test_session.flush()
+
+    login_response = await client.post(
+        url="/auth/login",
+        json={"username": "johndoe", "password": "testpassword"}
+    )
+
+    token = login_response.json()["token"]
+
+    post_response = await client.get(
+        url="/posts/?page=1&page_size=10&categories=Test",
+        cookies={"access_token": token}
+    )
+
+    assert post_response.status_code == 404
+    assert post_response.json()["detail"] == "Some categories not found"

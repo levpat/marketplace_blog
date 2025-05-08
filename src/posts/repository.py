@@ -78,6 +78,11 @@ class PostRepository:
                   categories: list[str],
                   search: str | None
                   ) -> Sequence[Post]:
+        if categories is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Need to add categories"
+            )
 
         if isinstance(categories, list) and len(categories) == 1:
             categories = categories[0].split(',')
