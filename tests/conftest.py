@@ -5,7 +5,7 @@ import pytest_asyncio
 from typing import AsyncGenerator
 
 from faststream.redis import TestRedisBroker
-from sqlalchemy import NullPool
+from sqlalchemy import NullPool, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from httpx import AsyncClient, ASGITransport
 
@@ -46,6 +46,7 @@ def event_loop():
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def setup_database():
     async with test_engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
