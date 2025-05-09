@@ -3,7 +3,7 @@ name = "mp-blog"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Lev Patskevich",email = "lion.patskevich@yandex.ru"}
+    { name = "Lev Patskevich", email = "lion.patskevich@yandex.ru" }
 ]
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
@@ -47,3 +47,17 @@ httpx = "^0.28.1"
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+select = ["E", "F", "W", "UP", "I"]
+ignore = ["E402"]
+exclude = ["src/migrations/**"]
+line-length = 120
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+
+[tool.ruff.lint]
+task-tags = ["TODO", "FIXME", "XXX"]
+dummy-variable-rgx = "^_+$"
