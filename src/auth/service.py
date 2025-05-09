@@ -8,7 +8,7 @@ from starlette.requests import Request
 
 from src.auth.schemas import GetAuthDataResponseModel
 from src.users.repository import UserRepository, get_user_repository
-from src.settings.config import access_token_expire_minutes, secret_key, alg, bcrypt_context
+from src.settings.config import get_settings
 
 
 class AuthService:
@@ -16,9 +16,10 @@ class AuthService:
                  repository: UserRepository
                  ):
         self.repository = repository
+        self.settings = get_settings()
 
-    @staticmethod
     def create_access_token(
+            self,
             data: dict,
             expires_delta: timedelta | None = None
     ) -> str:
@@ -26,9 +27,13 @@ class AuthService:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=access_token_expire_minutes)
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=self.settings.access_token_expire_minutes)
         to_encode.update({"exp": expire})
-        return jwt.encode(to_encode, secret_key, algorithm=alg)
+        return jwt.encode(
+            to_encode,
+            self.settings.secret_key,
+            algorithm=self.settings.alg)
 
     @staticmethod
     def set_token(
@@ -53,7 +58,7 @@ class AuthService:
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"}
             )
-        if not bcrypt_context.verify(password, user.hashed_password):
+        if not self.settings.bcrypt_context.verify(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Wrong password",
@@ -94,6 +99,7 @@ class JWTMiddleware:
             "/auth/login",
             "/users/",
         }
+        self.settings = get_settings()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -115,7 +121,10 @@ class JWTMiddleware:
             )
 
         try:
-            payload = jwt.decode(token, secret_key, algorithms=[alg])
+            payload = jwt.decode(
+                token,
+                self.settings.secret_key,
+                algorithms=[self.settings.alg])
             scope["user"] = payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(

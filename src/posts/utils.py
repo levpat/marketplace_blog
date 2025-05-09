@@ -1,7 +1,7 @@
 from typing import BinaryIO
 from minio import Minio
 
-from src.settings.config import minio_url, minio_bucket, minio_access, minio_secret
+from src.settings.config import get_settings
 
 
 class MinioHandler:
@@ -29,9 +29,9 @@ class MinioHandler:
 
 def get_minio_handler() -> MinioHandler:
     return MinioHandler(
-        minio_url,
-        minio_access,
-        minio_secret,
-        minio_bucket,
+        get_settings().minio_url,
+        get_settings().minio_access_key,
+        get_settings().minio_secret_key,
+        get_settings().minio_bucket,
         False
     )

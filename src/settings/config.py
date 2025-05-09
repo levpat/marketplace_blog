@@ -1,27 +1,48 @@
-import os
-import dotenv
 from passlib.context import CryptContext
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
+from typing import Set
 
-dotenv.load_dotenv()
-db_url = os.getenv('DB_URL')
-test_db_url = os.getenv('TEST_DB_URL')
-host = os.getenv('HOST')
-port = int(os.getenv('PORT'))
-secret_key = os.getenv('SECRET_KEY')
-alg = os.getenv('ALG')
-mail_address = os.getenv('MAIL_ADDRESS_FOR_GOOGLE')
-mail_pass = os.getenv('MAIL_PASS_FOR_GOOGLE')
-smtp = os.getenv('SMTP_2')
-minio_access = os.getenv('MINIO_ACCESS_KEY')
-minio_secret = os.getenv('MINIO_SECRET_KEY')
-minio_url = os.getenv('MINIO_URL')
-minio_bucket = os.getenv('MINIO_BUCKET')
-redis_url = os.getenv('BROKER')
 
-mail_yandex = os.getenv('MAIL_ADDRESS')
-pass_yandex = os.getenv('YANDEX_PASS')
-smtp_ya = os.getenv('SMTP')
+class Settings(BaseSettings):
+    # Database
+    db_url: str
+    test_db_url: str
+    host: str = "0.0.0.0"
+    port: int = 8000
 
-valid_exceptions = {'.png', '.jpg', '.jpeg', '.pdf'}
-access_token_expire_minutes = 20
-bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+    # Security
+    secret_key: str
+    alg: str
+    access_token_expire_minutes: int = 20
+    bcrypt_context: CryptContext = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+    # Email
+    mail_address: str
+    yandex_pass: str
+    smtp: str
+
+    # MinIO
+    minio_access_key: str
+    minio_secret_key: str
+    minio_url: str
+    minio_bucket: str
+
+    # Redis
+    broker: str
+
+    # File validation
+    valid_exceptions: Set[str] = {'.png', '.jpg', '.jpeg', '.pdf'}
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="",
+        extra="ignore",
+        case_sensitive=False,
+        validate_assignment=True
+    )
+
+
+@lru_cache
+def get_settings():
+    return Settings()

@@ -17,13 +17,13 @@ from src.main import app
 from src.posts.repository import PostRepository
 from src.posts.service import PostService, get_post_service
 from src.posts.utils import MinioHandler
-from src.settings.config import test_db_url, bcrypt_context
+from src.settings.config import get_settings
 from src.users.models import Users
 from src.users.repository import UserRepository
 from src.users.service import UserService, get_user_service
 
 test_engine: AsyncEngine = create_async_engine(
-    test_db_url,
+    get_settings().test_db_url,
     echo=True,
     poolclass=NullPool
 )
@@ -211,7 +211,7 @@ async def get_test_user(get_test_session):
     async with get_test_session.begin():
         test_user = Users(
             username="johndoe",
-            hashed_password=bcrypt_context.hash("testpassword"),
+            hashed_password=get_settings().bcrypt_context.hash("testpassword"),
             email="test@example.com",
             first_name="John",
             last_name="Doe"

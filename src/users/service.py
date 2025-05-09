@@ -8,15 +8,16 @@ from pydantic import EmailStr
 from src.users.models import Users
 from src.users.repository import UserRepository, get_user_repository
 from src.users.schemas import CreateUserSchema
-from src.settings.config import bcrypt_context, redis_url, pass_yandex, mail_yandex, smtp_ya
+from src.settings.config import get_settings
 
-broker = RedisBroker(redis_url)
+broker = RedisBroker(get_settings().broker)
 
 
 class UserService:
     def __init__(self,
                  repository: UserRepository):
         self.repository = repository
+        self.settings = get_settings()
 
     async def create(self,
                      create_user: CreateUserSchema
@@ -25,7 +26,7 @@ class UserService:
                                             last_name=create_user.last_name,
                                             username=create_user.username,
                                             email=str(create_user.email),
-                                            password=bcrypt_context.hash(create_user.password))
+                                            password=self.settings.bcrypt_context.hash(create_user.password))
 
         return user
 
@@ -64,13 +65,13 @@ async def handle_email_task(
         email: str
 ) -> None:
     conf = ConnectionConfig(
-        MAIL_USERNAME=mail_yandex,
-        MAIL_PASSWORD=pass_yandex,
+        MAIL_USERNAME=get_settings().mail_address,
+        MAIL_PASSWORD=get_settings().yandex_pass,
         MAIL_PORT=465,
-        MAIL_SERVER=smtp_ya,
+        MAIL_SERVER=get_settings().smtp,
         MAIL_STARTTLS=False,
         MAIL_SSL_TLS=True,
-        MAIL_FROM=mail_yandex,
+        MAIL_FROM=get_settings().mail_address,
     )
     email_service = EmailService(conf)
     await email_service.send_mail(email)

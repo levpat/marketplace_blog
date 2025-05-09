@@ -8,7 +8,7 @@ from src.posts.repository import PostRepository, get_post_repository
 from src.posts.schemas import CreatePostSchema, ResponseModelPostSchema, GetPostSchema, \
     ResponseModelDeletedPostSchema
 from src.posts.utils import MinioHandler, get_minio_handler
-from src.settings.config import valid_exceptions, minio_url, minio_bucket
+from src.settings.config import get_settings
 
 
 class PostService:
@@ -17,11 +17,12 @@ class PostService:
                  client: MinioHandler):
         self.repository = repository
         self.client = client
+        self.settings = get_settings()
 
     async def get_upload_image_url(self,
                                    file: UploadFile) -> str:
         file_extension = os.path.splitext(file.filename)[1].lower()
-        if file_extension not in valid_exceptions:
+        if file_extension not in self.settings.valid_exceptions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Invalid file type. Only .png, .jpg, .jpeg and .pdf are allowed'
@@ -38,7 +39,7 @@ class PostService:
         file_stream = BytesIO(file_contents)
         self.client.upload_file(file_name, file_stream, len(file_contents))
 
-        url = f'http://{minio_url}/{minio_bucket}/{file.filename}'
+        url = f'http://{self.settings.minio_url}/{self.settings.minio_bucket}/{file.filename}'
         return url
 
     async def get(self,
