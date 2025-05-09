@@ -1,0 +1,140 @@
+import jwt
+from typing import Annotated
+from datetime import timedelta, datetime, timezone
+from fastapi import status, HTTPException, Depends
+from fastapi import Response
+from starlette.types import ASGIApp, Scope, Send, Receive
+from starlette.requests import Request
+
+from src.auth.schemas import GetAuthDataResponseModel
+from src.users.repository import UserRepository, get_user_repository
+from src.settings.config import get_settings
+
+
+class AuthService:
+    def __init__(self,
+                 repository: UserRepository
+                 ):
+        self.repository = repository
+        self.settings = get_settings()
+
+    def create_access_token(
+            self,
+            data: dict,
+            expires_delta: timedelta | None = None
+    ) -> str:
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.now(timezone.utc) + expires_delta
+        else:
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=self.settings.access_token_expire_minutes)
+        to_encode.update({"exp": expire})
+        return jwt.encode(
+            to_encode,
+            self.settings.secret_key,
+            algorithm=self.settings.alg)
+
+    @staticmethod
+    def set_token(
+            response: Response,
+            token: str
+    ) -> None:
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True
+        )
+
+    async def authenticate_user(self,
+                                username: str,
+                                password: str,
+                                response: Response
+                                ) -> GetAuthDataResponseModel:
+        user = await self.repository.get_user_for_authenticate(username)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        if not self.settings.bcrypt_context.verify(password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Wrong password",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        data = {
+            "clientID": str(user.id),
+            "username": user.username,
+            "name": user.first_name,
+            "email": user.email,
+            "role": user.role
+        }
+        token = self.create_access_token(data)
+        self.set_token(response, token)
+
+        return GetAuthDataResponseModel(
+            status_code=status.HTTP_200_OK,
+            detail=f"Wellcome {user.first_name}!",
+            token=token
+        )
+
+
+def get_auth_service(
+        repository: Annotated[UserRepository, Depends(get_user_repository)]
+) -> AuthService:
+    return AuthService(
+        repository=repository,
+    )
+
+
+class JWTMiddleware:
+    def __init__(self,
+                 app: ASGIApp):
+        self.app = app
+        self.exclude_paths = {
+            "/docs",
+            "/openapi.json",
+            "/auth/login",
+            "/users/",
+        }
+        self.settings = get_settings()
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        path = scope.get("root_path", "") + scope.get("path", "")
+
+        if path in self.exclude_paths:
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
+        token = request.cookies.get("access_token")
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Need authorization"
+            )
+
+        try:
+            payload = jwt.decode(
+                token,
+                self.settings.secret_key,
+                algorithms=[self.settings.alg])
+            scope["user"] = payload
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired"
+            )
+        except jwt.InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid JWT token"
+            )
+
+        await self.app(scope, receive, send)

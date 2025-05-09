@@ -1,0 +1,27 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from src.auth.service import JWTMiddleware
+from src.categories.routers import category_router
+from src.users.routers import user_router
+from src.auth.routers import auth_router
+from src.posts.routers import post_router
+from src.users.service import broker
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await broker.start()
+    yield
+    await broker.close()
+
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(JWTMiddleware)
+
+app.include_router(user_router)
+app.include_router(auth_router)
+app.include_router(post_router)
+app.include_router(category_router)
