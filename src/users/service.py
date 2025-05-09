@@ -13,6 +13,8 @@ from src.settings.config import get_settings
 broker = RedisBroker(get_settings().broker)
 
 
+
+
 class UserService:
     def __init__(self,
                  repository: UserRepository):
