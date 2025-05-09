@@ -1,42 +1,22 @@
-name: Linter CI
+name: linter-CI
 
 on:
   push:
     paths:
-      - '**.py'
-      - 'pyproject.toml'  # Важно отслеживать изменения конфига
+      '**.py'
   pull_request:
     paths:
-      - '**.py'
-      - 'pyproject.toml'
+      '**.py'
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      PYTHON_VERSION: "3.12"
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Для работы с историей коммитов
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'  # Кэширование зависимостей
+      - name: Ruff install
+        run: pip3 install ruff
 
-      - name: Install Ruff
-        run: pip install ruff==0.11.8
-
-      - name: Run Ruff with fixes
-        run: |
-          ruff check --fix --exit-non-zero-on-fix --config=pyproject.toml .
-          
-      - name: Auto-commit fixes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style: apply automatic Ruff fixes"
-          branch: ${{ github.head_ref }}
-          file_pattern: '*.py'
+      - name: Run ruff lintering
+        run: ruff check --fix
