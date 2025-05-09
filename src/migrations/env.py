@@ -22,6 +22,7 @@ from src.associations.models import PostCategories
 from src.categories.models import Category
 from src.posts.models import Post, DeletedPost
 from src.users.models import Users
+
 from src.backend.db import Base
 
 target_metadata = Base.metadata
