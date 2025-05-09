@@ -1,15 +1,41 @@
-name: Pre-Commit
+name: Pre-Commit Checks
+
 on: [push, pull_request]
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pre-commit
-        run: pip install pre-commit
+          cache: 'pip'
+
+      - name: Cache pre-commit
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pre-commit
+            ${{ env.pythonLocation }}/bin/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install dependencies
+        run: |
+          pip install pre-commit
+          pre-commit install-hooks
+
       - name: Run pre-commit
         run: pre-commit run --all-files --show-diff-on-failure
+
+      - name: Commit fixes
+        if: failure()
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: apply automatic fixes (pre-commit)"
+          file_pattern: "*.py"
+          branch: ${{ github.head_ref }}
