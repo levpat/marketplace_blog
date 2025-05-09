@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Ruff with fixes
         run: |
-          ruff check --fix --exit-zero-on-fix --config=pyproject.toml .
+          ruff check --fix --exit-non-zero-on-fix --config=pyproject.toml .
           
       - name: Auto-commit fixes
         uses: stefanzweifel/git-auto-commit-action@v5
