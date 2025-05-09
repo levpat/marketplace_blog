@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Column, String, UUID, DateTime, TEXT, func, Index
+from sqlalchemy import Column, String, UUID, DateTime, TEXT
 from sqlalchemy.orm import relationship
 
 from src.backend.db import Base

@@ -2,7 +2,7 @@ import uuid
 import enum
 from src.backend.db import Base
 
-from sqlalchemy import Column, UUID, String, Boolean, Enum
+from sqlalchemy import Column, UUID, String, Enum
 
 
 class UserRole(str, enum.Enum):
